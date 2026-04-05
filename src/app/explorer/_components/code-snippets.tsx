@@ -150,24 +150,116 @@ print(response.decode("utf-8"))`;
 
 function generatePowerShell(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
   const { version, path } = extractApiPath(url);
+  const cmdlet = graphPathToCmdlet(method, path);
   const uri = `/${version}${path}`;
 
-  const bodyBlock = body
-    ? `\n$body = @'\n${body}\n'@\n`
+  // Build the cmdlet-style snippet
+  const idParams = extractIdParams(path);
+  const cmdletParams = idParams.length > 0
+    ? idParams.map(p => ` -${p.name} "${p.placeholder}"`).join("")
     : "";
 
-  const bodyParam = body ? " `\n    -Body $body `\n    -ContentType 'application/json'" : "";
+  const bodyBlock = body
+    ? `\n$body = @'\n${body}\n'@ | ConvertFrom-Json\n`
+    : "";
 
-  return `# Requires Microsoft.Graph module
+  const bodyParam = body ? ` -BodyParameter $body` : "";
+
+  // Show the cmdlet form as primary, Invoke-MgGraphRequest as alternative
+  const cmdletSnippet = `# Requires Microsoft.Graph module
 # Install-Module Microsoft.Graph -Scope CurrentUser
 
-Connect-MgGraph -Scopes "User.Read.All"
+Connect-MgGraph -Scopes "${guessScope(path)}"
+${bodyBlock}
+${cmdlet}${cmdletParams}${bodyParam}`;
 
-${bodyBlock}$response = Invoke-MgGraphRequest \\
-    -Uri "${uri}" \\
-    -Method ${method}${bodyParam}
+  const invokeBody = body ? ` \`\n    -Body ($body | ConvertTo-Json -Depth 10) \`\n    -ContentType 'application/json'` : "";
+  const invokeSnippet = `
+# Alternative: generic request
+# Invoke-MgGraphRequest -Uri "${uri}" -Method ${method}${invokeBody}`;
 
-$response | ConvertTo-Json -Depth 10`;
+  return `${cmdletSnippet}\n${invokeSnippet}`;
+}
+
+// Convert a Graph API path + method to a PowerShell cmdlet name
+function graphPathToCmdlet(method: string, path: string): string {
+  const verbMap: Record<string, string> = {
+    GET: "Get", POST: "New", PATCH: "Update", PUT: "Set", DELETE: "Remove",
+  };
+  const verb = verbMap[method] ?? "Get";
+
+  // Split path, remove IDs and special segments
+  const segments = path.split("/").filter(Boolean);
+  const cleanSegments: string[] = [];
+
+  for (const seg of segments) {
+    if (seg.startsWith("{") || seg.startsWith("$")) continue;
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}/i.test(seg)) continue;
+    cleanSegments.push(seg);
+  }
+
+  // PascalCase each segment and singularize the last one
+  const parts = cleanSegments.map((seg, idx) => {
+    let pascal = seg.replace(/([a-z])([A-Z])/g, "$1$2")
+      .split(/[-_]/)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join("");
+    // Singularize last segment for GET (list) and POST (create)
+    if (idx === cleanSegments.length - 1) {
+      pascal = singularize(pascal);
+    }
+    return pascal;
+  });
+
+  return `${verb}-Mg${parts.join("")}`;
+}
+
+function singularize(word: string): string {
+  if (word.endsWith("ies")) return word.slice(0, -3) + "y";
+  if (word.endsWith("ses") || word.endsWith("xes") || word.endsWith("zes"))
+    return word.slice(0, -2);
+  if (word.endsWith("ves")) return word.slice(0, -3) + "fe";
+  if (word.endsWith("s") && !word.endsWith("ss") && !word.endsWith("us"))
+    return word.slice(0, -1);
+  return word;
+}
+
+function extractIdParams(path: string): { name: string; placeholder: string }[] {
+  const params: { name: string; placeholder: string }[] = [];
+  const segments = path.split("/").filter(Boolean);
+
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i]!;
+    if (seg.startsWith("{") && seg.endsWith("}")) {
+      const raw = seg.slice(1, -1);
+      const name = raw.split(/[-_]/)
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join("");
+      params.push({ name, placeholder: `{${raw}}` });
+    }
+  }
+  return params;
+}
+
+function guessScope(path: string): string {
+  const p = path.toLowerCase();
+  if (p.includes("devicemanagement") || p.includes("deviceapp"))
+    return "DeviceManagementConfiguration.Read.All";
+  if (p.includes("user") || p.startsWith("/me"))
+    return "User.Read.All";
+  if (p.includes("group")) return "Group.Read.All";
+  if (p.includes("mail") || p.includes("message"))
+    return "Mail.Read";
+  if (p.includes("calendar") || p.includes("event"))
+    return "Calendars.Read";
+  if (p.includes("drive") || p.includes("file"))
+    return "Files.Read.All";
+  if (p.includes("team")) return "Team.ReadBasic.All";
+  if (p.includes("application") || p.includes("serviceprincipal"))
+    return "Application.Read.All";
+  if (p.includes("directory") || p.includes("role"))
+    return "Directory.Read.All";
+  return "User.Read";
 }
 
 function generateGo(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
@@ -248,7 +340,7 @@ const KEYWORD_PATTERNS: Record<Language, RegExp> = {
   javascript: /\b(const|let|var|await|async|function|import|from|export|return|new|if|else|try|catch|throw)\b/g,
   csharp: /\b(using|var|new|await|async|class|public|private|static|void|string|int|bool|null|return|if|else|try|catch|throw)\b/g,
   python: /\b(import|from|def|class|return|if|else|elif|try|except|raise|with|as|print|None|True|False|await)\b/g,
-  powershell: /(\$\w+|\b(Connect-MgGraph|Invoke-MgGraphRequest|ConvertTo-Json|Install-Module)\b|-Uri\b|-Method\b|-Body\b|-ContentType\b|-Depth\b|-Scopes\b|-Scope\b)/g,
+  powershell: /(\$\w+|\b(\w+-Mg\w+|Connect-MgGraph|Invoke-MgGraphRequest|ConvertTo-Json|ConvertFrom-Json|Install-Module)\b|-Uri\b|-Method\b|-Body\b|-BodyParameter\b|-ContentType\b|-Depth\b|-Scopes\b|-Scope\b|-\w+Id\b)/g,
   go: /\b(package|import|func|var|defer|nil|string|main|context)\b/g,
   curl: /\b(curl)\b/g,
 };
