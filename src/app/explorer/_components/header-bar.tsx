@@ -133,18 +133,6 @@ export function HeaderBar() {
 
         <ThemeToggle />
 
-        <a
-          href="https://github.com/jorgeasaurus/graphexplorerplus/issues/new/choose"
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Report issue or request feature"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-        </a>
-
         <div className="mx-1 h-5 w-px bg-border-subtle" aria-hidden="true" />
 
         {authContent}

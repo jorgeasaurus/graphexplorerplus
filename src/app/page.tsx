@@ -440,14 +440,24 @@ export default function Home() {
           <p className="text-sm text-text-muted">
             Built for power users
           </p>
-          <a
-            href="https://github.com/jorgeasaurus/graphexplorerplus"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-text-muted transition-colors hover:text-text-secondary"
-          >
-            GitHub
-          </a>
+          <div className="flex items-center gap-4">
+            <a
+              href="https://github.com/jorgeasaurus/graphexplorerplus/issues/new/choose"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-text-muted transition-colors hover:text-text-secondary"
+            >
+              Report Issue
+            </a>
+            <a
+              href="https://github.com/jorgeasaurus/graphexplorerplus"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-text-muted transition-colors hover:text-text-secondary"
+            >
+              GitHub
+            </a>
+          </div>
         </div>
       </footer>
     </div>
