@@ -259,6 +259,8 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
       { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.winGetApp", name: "WinGet apps" },
       { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.iosStoreApp", name: "iOS Store apps" },
       { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.androidManagedStoreApp", name: "Android Managed apps" },
+      { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.macOSDmgApp", name: "macOS DMG apps" },
+      { method: "GET", path: "/v1.0/deviceAppManagement/mobileApps/graph.macOSLobApp", name: "macOS LOB apps" },
       { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.microsoftStoreForBusinessApp", name: "Store for Business apps" },
       { method: "GET", path: "/v1.0/deviceAppManagement/mobileApps/{mobileApp-id}/assignments", name: "App assignments" },
       { method: "GET", path: "/beta/deviceAppManagement/mobileApps/{mobileApp-id}/deviceStatuses", name: "App install statuses" },

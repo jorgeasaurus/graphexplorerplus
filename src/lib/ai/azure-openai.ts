@@ -22,7 +22,7 @@ Common patterns:
 - Devices: /v1.0/deviceManagement/managedDevices
 - Compliance: /v1.0/deviceManagement/deviceCompliancePolicies
 - Config profiles: /v1.0/deviceManagement/deviceConfigurations, /beta/deviceManagement/configurationPolicies
-- Apps: /v1.0/deviceAppManagement/mobileApps
+- Apps: /v1.0/deviceAppManagement/mobileApps (filter by OData type cast, see below)
 - Autopilot: /beta/deviceManagement/windowsAutopilotDeviceIdentities
 - Scripts: /beta/deviceManagement/deviceManagementScripts
 - Conditional Access: /v1.0/identity/conditionalAccess/policies
@@ -64,6 +64,22 @@ Filter examples:
 - Negation: NOT(expression), e.g. $filter=NOT(companyName eq 'Microsoft') (advanced query)
 - App credentials: use /v1.0/applications?$select=id,displayName,passwordCredentials,keyCredentials (expiration checked client-side)
 - Admin roles: use /v1.0/roleManagement/directory/roleAssignments?$expand=principal
+
+Intune mobile app types (mobileApp is abstract, filter by OData type cast):
+- iOS store apps: /v1.0/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.iosStoreApp')
+- iOS LOB apps: /v1.0/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.iosLobApp')
+- Android store apps: /v1.0/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.androidStoreApp')
+- Android LOB apps: /v1.0/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.androidLobApp')
+- Windows MSI apps: /v1.0/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.windowsMobileMSI')
+- Win32 LOB apps: /beta/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.win32LobApp')
+- macOS DMG apps: /beta/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.macOSDmgApp')
+- macOS LOB apps: /v1.0/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.macOSLobApp')
+- macOS Office suite: /v1.0/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.macOSOfficeSuiteApp')
+- Web apps: /v1.0/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.webApp')
+- Microsoft Store apps: /beta/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.winGetApp')
+- NEVER use $filter=operatingSystem on mobileApps -- that property does not exist on the base type
+- To get "all macOS apps", combine: $filter=isof('microsoft.graph.macOSLobApp') or isof('microsoft.graph.macOSDmgApp') or isof('microsoft.graph.macOSOfficeSuiteApp')
+- To get "all iOS apps": $filter=isof('microsoft.graph.iosStoreApp') or isof('microsoft.graph.iosLobApp') or isof('microsoft.graph.iosVppApp')
 
 CRITICAL filter syntax rules:
 - OData functions are LOWERCASE: startswith, endswith, contains (NOT startsWith, endsWith, Contains)
