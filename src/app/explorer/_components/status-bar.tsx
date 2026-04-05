@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useIsAuthenticated } from "@azure/msal-react";
 
 export function StatusBar() {
-  const [apiVersion, setApiVersion] = useState<"v1.0" | "beta">("v1.0");
   const isAuth = useIsAuthenticated();
 
   return (
@@ -18,32 +16,7 @@ export function StatusBar() {
         <span>{isAuth ? "Connected" : "Not connected"}</span>
       </div>
 
-      {/* Right: API version toggle */}
-      <div className="flex items-center gap-1">
-        <button
-          onClick={() => setApiVersion("v1.0")}
-          aria-pressed={apiVersion === "v1.0"}
-          className={`rounded px-1.5 py-0.5 transition-colors ${
-            apiVersion === "v1.0"
-              ? "bg-accent-subtle text-accent"
-              : "text-text-muted hover:text-text-tertiary"
-          }`}
-        >
-          v1.0
-        </button>
-        <span className="text-text-muted">/</span>
-        <button
-          onClick={() => setApiVersion("beta")}
-          aria-pressed={apiVersion === "beta"}
-          className={`rounded px-1.5 py-0.5 transition-colors ${
-            apiVersion === "beta"
-              ? "bg-accent-subtle text-accent"
-              : "text-text-muted hover:text-text-tertiary"
-          }`}
-        >
-          beta
-        </button>
-      </div>
+      <span className="text-text-muted">v0.1.0</span>
     </footer>
   );
 }
