@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { type ReactNode, useState, useRef, useEffect, useCallback } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { InteractionStatus } from "@azure/msal-browser";
 import { signIn, signOut, setSelectedCloudEnvironment, getSelectedCloudEnvironment } from "~/lib/auth/authUtils";
@@ -57,9 +57,36 @@ export function HeaderBar() {
     window.location.reload();
   }, []);
 
+  let authContent: ReactNode;
+  if (isLoading) {
+    authContent = <span className="px-3 text-xs text-text-muted">Signing in...</span>;
+  } else if (isAuth) {
+    authContent = (
+      <div className="flex items-center gap-1.5">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
+          {getInitials(displayName)}
+        </span>
+        <button
+          onClick={() => void signOut()}
+          className="flex h-9 items-center rounded-lg px-3 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary"
+        >
+          Sign Out
+        </button>
+      </div>
+    );
+  } else {
+    authContent = (
+      <button
+        onClick={() => void signIn()}
+        className="flex h-9 items-center gap-2 rounded-lg bg-accent/10 px-4 text-xs font-semibold text-accent transition-colors hover:bg-accent/20"
+      >
+        Sign In
+      </button>
+    );
+  }
+
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-border-subtle bg-bg-deep px-4 sm:px-5">
-      {/* Left: Title */}
       <a href="/" className="flex items-center" aria-label="Home">
         <span className="font-sans text-lg font-bold tracking-tight text-text-primary">
           Graph Explorer<span className="text-accent">+</span>
@@ -68,9 +95,7 @@ export function HeaderBar() {
 
       <div className="flex-1" />
 
-      {/* Right actions — all buttons are 36px min touch targets */}
       <div className="flex items-center gap-1">
-        {/* Cloud env */}
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setCloudOpen((o) => !o)}
@@ -110,28 +135,7 @@ export function HeaderBar() {
 
         <div className="mx-1 h-5 w-px bg-border-subtle" aria-hidden="true" />
 
-        {isLoading ? (
-          <span className="px-3 text-xs text-text-muted">Signing in...</span>
-        ) : isAuth ? (
-          <div className="flex items-center gap-1.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
-              {getInitials(displayName)}
-            </span>
-            <button
-              onClick={() => void signOut()}
-              className="flex h-9 items-center rounded-lg px-3 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary"
-            >
-              Sign Out
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => void signIn()}
-            className="flex h-9 items-center gap-2 rounded-lg bg-accent/10 px-4 text-xs font-semibold text-accent transition-colors hover:bg-accent/20"
-          >
-            Sign In
-          </button>
-        )}
+        {authContent}
       </div>
     </header>
   );

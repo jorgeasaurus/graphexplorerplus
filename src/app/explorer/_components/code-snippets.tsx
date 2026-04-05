@@ -363,6 +363,13 @@ const GENERATORS: Record<Language, (m: string, u: string, h?: Record<string, str
 
 // ── Syntax Highlighting ────────────────────────────────────
 
+const MATCH_TYPE_CLASSES: Record<string, string> = {
+  keyword: "text-method-patch",
+  string: "text-success",
+  comment: "text-text-muted italic",
+  fn: "text-info",
+};
+
 const KEYWORD_PATTERNS: Record<Language, RegExp> = {
   javascript: /\b(const|let|var|await|async|function|import|from|export|return|new|if|else|try|catch|throw)\b/g,
   csharp: /\b(using|var|new|await|async|class|public|private|static|void|string|int|bool|null|return|if|else|try|catch|throw)\b/g,
@@ -447,14 +454,7 @@ function highlightCode(code: string, language: Language): React.ReactNode[] {
         );
       }
 
-      const colorClass =
-        match.type === "keyword"
-          ? "text-method-patch"
-          : match.type === "string"
-            ? "text-success"
-            : match.type === "comment"
-              ? "text-text-muted italic"
-              : "text-info";
+      const colorClass = MATCH_TYPE_CLASSES[match.type] ?? "text-text-primary";
 
       segments.push(
         <span key={`${lineIdx}-${match.type}-${match.start}`} className={colorClass}>

@@ -17,8 +17,10 @@ function useTypewriter(text: string, speed = 40, startDelay = 0) {
     setDisplayed("");
     setDone(false);
     let i = 0;
+    let interval: ReturnType<typeof setInterval>;
+
     const timeout = setTimeout(() => {
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         i++;
         setDisplayed(text.slice(0, i));
         if (i >= text.length) {
@@ -26,9 +28,12 @@ function useTypewriter(text: string, speed = 40, startDelay = 0) {
           setDone(true);
         }
       }, speed);
-      return () => clearInterval(interval);
     }, startDelay);
-    return () => clearTimeout(timeout);
+
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
   }, [text, speed, startDelay]);
 
   return { displayed, done };
@@ -137,6 +142,47 @@ function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: stri
   );
 }
 
+// ── Nav auth controls ──────────────────────────────────────
+
+function NavAuthControls({
+  isLoading,
+  isAuth,
+  displayName,
+}: {
+  isLoading: boolean;
+  isAuth: boolean;
+  displayName: string | undefined;
+}): React.ReactNode {
+  if (isLoading) {
+    return <span className="px-4 py-2 text-sm text-text-muted">Signing in...</span>;
+  }
+
+  if (isAuth) {
+    return (
+      <>
+        <span className="hidden px-4 py-2 text-sm font-medium text-text-secondary sm:block">
+          {displayName}
+        </span>
+        <button
+          onClick={() => void signOut()}
+          className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
+        >
+          Sign Out
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => void signIn()}
+      className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
+    >
+      Sign In
+    </button>
+  );
+}
+
 // ── Page ───────────────────────────────────────────────────
 
 export default function Home() {
@@ -181,28 +227,7 @@ export default function Home() {
           </Link>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            {isLoading ? (
-              <span className="px-4 py-2 text-sm text-text-muted">Signing in...</span>
-            ) : isAuth ? (
-              <>
-                <span className="hidden px-4 py-2 text-sm font-medium text-text-secondary sm:block">
-                  {displayName}
-                </span>
-                <button
-                  onClick={() => void signOut()}
-                  className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => void signIn()}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
-              >
-                Sign In
-              </button>
-            )}
+            <NavAuthControls isLoading={isLoading} isAuth={isAuth} displayName={displayName} />
             <Link
               href="/explorer"
               className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-bg-deep transition-colors hover:bg-accent-hover"

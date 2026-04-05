@@ -7,6 +7,12 @@ import { SampleQueries } from "./sample-queries";
 
 type TabId = "history" | "samples" | "resources";
 
+const TABS: { id: TabId; label: string }[] = [
+  { id: "samples", label: "Samples" },
+  { id: "resources", label: "Resources" },
+  { id: "history", label: "History" },
+];
+
 export function Sidebar() {
   const [activeTab, setActiveTab] = useState<TabId>("samples");
   const [collapsed, setCollapsed] = useState(false);
@@ -39,13 +45,7 @@ export function Sidebar() {
     <aside className="flex w-64 shrink-0 flex-col border-r border-border-subtle bg-bg-deep">
       {/* Tab bar */}
       <div className="flex items-center gap-0.5 border-b border-border-subtle p-1.5">
-        {(
-          [
-            { id: "samples" as const, label: "Samples" },
-            { id: "resources" as const, label: "Resources" },
-            { id: "history" as const, label: "History" },
-          ] as const
-        ).map((tab) => (
+        {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}

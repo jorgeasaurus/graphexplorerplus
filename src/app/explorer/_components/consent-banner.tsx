@@ -90,34 +90,20 @@ export function ConsentBanner({ status, body, method, url, onRetry }: ConsentBan
   // Combine scopes: prefer error-parsed scopes (more specific), fall back to index
   const displayScopes = errorScopes.length > 0 ? errorScopes : knownScopes;
 
-  const handleConsent = async () => {
+  async function handleConsent(andRetry: boolean) {
     if (displayScopes.length === 0) return;
     setConsenting(true);
     setConsentError(null);
     try {
       await consentToScopes(displayScopes);
       setConsented(true);
+      if (andRetry) onRetry();
     } catch (err) {
       setConsentError(err instanceof Error ? err.message : "Consent failed");
     } finally {
       setConsenting(false);
     }
-  };
-
-  const handleConsentAndRetry = async () => {
-    if (displayScopes.length === 0) return;
-    setConsenting(true);
-    setConsentError(null);
-    try {
-      await consentToScopes(displayScopes);
-      setConsented(true);
-      onRetry();
-    } catch (err) {
-      setConsentError(err instanceof Error ? err.message : "Consent failed");
-    } finally {
-      setConsenting(false);
-    }
-  };
+  }
 
   return (
     <div className="border-b border-warning/20 bg-warning/5 px-3 py-2.5">
@@ -176,14 +162,14 @@ export function ConsentBanner({ status, body, method, url, onRetry }: ConsentBan
                 {!consented ? (
                   <>
                     <button
-                      onClick={() => void handleConsentAndRetry()}
+                      onClick={() => void handleConsent(true)}
                       disabled={consenting}
                       className="rounded bg-warning/15 px-3 py-1 text-[11px] font-medium text-warning transition-colors hover:bg-warning/25 disabled:opacity-60"
                     >
                       {consenting ? "Consenting\u2026" : "Consent & Retry"}
                     </button>
                     <button
-                      onClick={() => void handleConsent()}
+                      onClick={() => void handleConsent(false)}
                       disabled={consenting}
                       className="rounded px-3 py-1 text-[11px] text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-secondary disabled:opacity-60"
                     >

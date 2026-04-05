@@ -8,8 +8,6 @@ import {
 } from "~/lib/data/permissions";
 import { getAccessToken, consentToScopes, isAuthenticated } from "~/lib/auth/authUtils";
 
-// ─── Scope Descriptions ──────────────────────────────────────────────
-
 const SCOPE_DESCRIPTIONS: Record<string, string> = {
   "Directory.ReadWrite.All":
     "Allows the app to read and write data in your organization's directory, such as users and groups. It does not allow the app to delete users or groups, or reset user passwords.",
@@ -128,8 +126,6 @@ function getDescription(scope: string): string {
   return SCOPE_DESCRIPTIONS[scope] ?? "Allows the app to access this resource on your behalf.";
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────
-
 function extractPath(url: string): string {
   try {
     const u = new URL(url);
@@ -155,8 +151,6 @@ function decodeTokenScopes(token: string): Set<string> {
     return new Set();
   }
 }
-
-// ─── Component ───────────────────────────────────────────────────────
 
 interface ModifyPermissionsProps {
   method: string;

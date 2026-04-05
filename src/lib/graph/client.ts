@@ -1,4 +1,4 @@
-import { getAccessToken, getSelectedCloudEnvironment, AuthSessionExpiredError } from "~/lib/auth/authUtils";
+import { getAccessToken, getSelectedCloudEnvironment } from "~/lib/auth/authUtils";
 import { getGraphEndpoint, type CloudEnvironment } from "~/lib/auth/msalConfig";
 
 export interface GraphRequestOptions {
@@ -42,7 +42,6 @@ export class GraphClient {
   async executeRequest(options: GraphRequestOptions): Promise<GraphResponse> {
     const { method, url, headers: customHeaders, body, scopes } = options;
 
-    // Build full URL - if the user provides a full URL, use it; otherwise prepend the base
     const fullUrl = url.startsWith("http") ? url : `${this.baseUrl}${url.startsWith("/") ? "" : "/"}${url}`;
 
     const headers = await this.getHeaders(customHeaders, scopes);
@@ -61,11 +60,7 @@ export class GraphClient {
     const response = await fetch(fullUrl, fetchOptions);
     const timeMs = Math.round(performance.now() - startTime);
 
-    // Collect response headers
-    const responseHeaders: Record<string, string> = {};
-    response.headers.forEach((value, key) => {
-      responseHeaders[key] = value;
-    });
+    const responseHeaders: Record<string, string> = Object.fromEntries(response.headers.entries());
 
     const contentType = response.headers.get("content-type") ?? "";
     const isBinary = /^(image\/|audio\/|video\/|application\/octet-stream|application\/pdf)/.test(contentType);

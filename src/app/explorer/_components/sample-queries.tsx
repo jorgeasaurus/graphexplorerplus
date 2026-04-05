@@ -60,7 +60,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     name: "Groups",
     queries: [
       { method: "GET", path: "/v1.0/groups", name: "List all groups" },
-      { method: "GET", path: "/v1.0/groups?$filter=groupTypes/any(c:c eq 'Unified')", name: "Microsoft 365 groups" },
+      { method: "GET", path: "/v1.0/groups?$filter=mailEnabled eq true and securityEnabled eq false", name: "Microsoft 365 groups" },
       { method: "GET", path: "/v1.0/groups?$filter=securityEnabled eq true", name: "Security groups" },
       { method: "GET", path: "/v1.0/groups/{group-id}/members", name: "Group members" },
       { method: "GET", path: "/v1.0/groups/{group-id}/owners", name: "Group owners" },
@@ -139,7 +139,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
       { method: "GET", path: "/v1.0/servicePrincipals?$filter=appId eq '{app-id}'", name: "SP by app ID" },
       { method: "GET", path: "/v1.0/oauth2PermissionGrants", name: "OAuth2 permission grants" },
       { method: "GET", path: "/v1.0/applications/{application-id}/owners", name: "App owners" },
-      { method: "GET", path: "/beta/applications?$filter=passwordCredentials/any(p:p/endDateTime lt 2026-06-01T00:00:00Z)", name: "Apps with expiring secrets" },
+      { method: "GET", path: "/v1.0/applications?$select=id,displayName,passwordCredentials,keyCredentials&$top=50", name: "Apps with credentials" },
       { method: "GET", path: "/v1.0/servicePrincipals/{servicePrincipal-id}/appRoleAssignedTo", name: "SP role assignments" },
     ],
   },
@@ -255,7 +255,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     name: "Intune - Apps",
     queries: [
       { method: "GET", path: "/v1.0/deviceAppManagement/mobileApps", name: "All mobile apps" },
-      { method: "GET", path: "/v1.0/deviceAppManagement/mobileApps?$filter=isOf('microsoft.graph.win32LobApp')", name: "Win32 apps" },
+      { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.win32LobApp", name: "Win32 apps" },
       { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.winGetApp", name: "WinGet apps" },
       { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.iosStoreApp", name: "iOS Store apps" },
       { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.androidManagedStoreApp", name: "Android Managed apps" },

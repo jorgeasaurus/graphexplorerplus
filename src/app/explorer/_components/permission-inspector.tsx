@@ -81,9 +81,9 @@ export function PermissionInspector({ method, url }: PermissionInspectorProps) {
     };
   }, [method, url, lookup]);
 
-  const hasDelegated = perms?.delegatedWork && perms.delegatedWork.length > 0;
-  const hasApp = perms?.application && perms.application.length > 0;
-  const found = hasDelegated || hasApp;
+  const delegatedScopes = perms?.delegatedWork ?? [];
+  const appScopes = perms?.application ?? [];
+  const found = delegatedScopes.length > 0 || appScopes.length > 0;
 
   return (
     <div className="flex min-h-[28px] items-center gap-2 border-b border-border-subtle bg-bg-deep px-3 py-1">
@@ -108,17 +108,17 @@ export function PermissionInspector({ method, url }: PermissionInspectorProps) {
         </span>
       ) : (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
-          {hasDelegated && (
+          {delegatedScopes.length > 0 && (
             <PermissionPills
               label="Delegated:"
-              scopes={perms!.delegatedWork!}
+              scopes={delegatedScopes}
               pillClass="bg-accent-subtle text-accent"
             />
           )}
-          {hasApp && (
+          {appScopes.length > 0 && (
             <PermissionPills
               label="Application:"
-              scopes={perms!.application!}
+              scopes={appScopes}
               pillClass="bg-bg-elevated text-text-secondary"
             />
           )}

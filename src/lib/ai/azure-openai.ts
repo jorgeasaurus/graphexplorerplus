@@ -13,6 +13,8 @@ Rules:
 - For POST/PATCH/PUT, include a "body" field with a JSON string template showing required fields
 - If the request is ambiguous, pick the most common interpretation
 - NEVER include explanation text, only the JSON object
+- NEVER use any() or all() lambda expressions in $filter. They require a ConsistencyLevel header that is not set. Instead, use $select to return the collection property and let the caller filter client-side. For example, to find apps with credentials use $select=id,displayName,passwordCredentials,keyCredentials instead of passwordCredentials/any().
+- For admin role members, use /v1.0/directoryRoles (to list roles) or /v1.0/roleManagement/directory/roleAssignments?$expand=principal (to list all assignments). Do NOT filter users by assignedLicenses or roles with any().
 
 Common patterns:
 - Users: /v1.0/users, /v1.0/me
@@ -41,10 +43,37 @@ Common patterns:
 
 Filter examples:
 - String equals: $filter=displayName eq 'value'
-- Starts with: $filter=startsWith(displayName,'A')
-- OS filter: $filter=operatingSystem eq 'Windows'
+- Not equals: $filter=companyName ne null (advanced query, needs ConsistencyLevel: eventual)
+- Starts with: $filter=startswith(displayName,'A') (lowercase 'startswith', NOT 'startsWith')
+- Ends with: $filter=endswith(mail,'@hotmail.com') (advanced query)
+- Contains: $filter=contains(scope/microsoft.graph.accessReviewQueryScope/query, './members')
 - Boolean: $filter=accountEnabled eq true
-- Compliance: $filter=complianceState eq 'noncompliant'`;
+- In operator: $filter=department in ('Retail', 'Sales')
+- Less/greater than: $filter=registrationDateTime ge 2021-01-02T12:00:00Z (advanced query, no quotes on dates/GUIDs)
+- OS filter: $filter=operatingSystem eq 'Windows'
+- Compliance: $filter=complianceState eq 'noncompliant'
+- Microsoft 365 groups: $filter=mailEnabled eq true and securityEnabled eq false
+- Security groups: $filter=securityEnabled eq true
+- Unread mail: $filter=isRead eq false
+- Mail with attachments: $filter=hasAttachments eq true
+- Events after date: $filter=start/dateTime ge '2017-07-01T08:00' (dateTime is a String property, so quotes ARE needed here)
+- Messages from address: $filter=from/emailAddress/address eq 'user@example.com'
+- Date range: $filter=receivedDateTime ge 2024-01-01 and receivedDateTime lt 2024-02-01
+- Windows 11 devices: $filter=osVersion ge '10.0.26200'
+- Has operator: $filter=scenarios has 'secureFoundation'
+- Negation: NOT(expression), e.g. $filter=NOT(companyName eq 'Microsoft') (advanced query)
+- App credentials: use /v1.0/applications?$select=id,displayName,passwordCredentials,keyCredentials (expiration checked client-side)
+- Admin roles: use /v1.0/roleManagement/directory/roleAssignments?$expand=principal
+
+CRITICAL filter syntax rules:
+- OData functions are LOWERCASE: startswith, endswith, contains (NOT startsWith, endsWith, Contains)
+- GUID values are NOT quoted: $filter=appOwnerOrganizationId eq 72f988bf-86f1-41af-91ab-2d7cd011db47
+- DateTimeOffset values are NOT quoted: $filter=createdDateTime ge 2024-01-01T00:00:00Z
+- String values ARE quoted with single quotes: $filter=displayName eq 'value'
+- Boolean values are NOT quoted: $filter=accountEnabled eq true
+- Combine with 'and'/'or': $filter=startswith(displayName,'A') and accountEnabled eq true
+- Negate with 'not': $filter=not(startswith(mail,'admin'))
+- Many advanced filters (ne, not, endswith, $count on collections) require ConsistencyLevel: eventual header AND $count=true query param`;
 }
 
 export interface NLQueryResult {

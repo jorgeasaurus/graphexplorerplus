@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getHistory, clearHistory, type HistoryEntry } from "~/lib/history-store";
 
-// ── Helpers ─────────────────────────────────────────────────────────
-
 const METHOD_CLASSES: Record<string, string> = {
   GET: "text-method-get bg-method-get/10",
   POST: "text-method-post bg-method-post/10",
@@ -69,8 +67,6 @@ function groupByDate(items: HistoryEntry[]): [string, HistoryEntry[]][] {
   return Array.from(groups.entries());
 }
 
-// ── Icons ───────────────────────────────────────────────────────────
-
 function SearchIcon() {
   return (
     <svg
@@ -134,8 +130,6 @@ function TrashIcon() {
     </svg>
   );
 }
-
-// ── Component ───────────────────────────────────────────────────────
 
 export function HistoryPanel() {
   const [entries, setEntries] = useState<HistoryEntry[]>([]);

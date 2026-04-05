@@ -1,5 +1,5 @@
 import { type AccountInfo, InteractionRequiredAuthError, BrowserAuthError } from "@azure/msal-browser";
-import { msalInstance, loginRequest, getAuthorityUrl, type CloudEnvironment } from "./msalConfig";
+import { msalInstance, loginRequest, getAuthorityUrl, CLOUD_ENVIRONMENTS, type CloudEnvironment } from "./msalConfig";
 
 let selectedCloudEnvironment: CloudEnvironment = "global";
 
@@ -17,7 +17,7 @@ export function setSelectedCloudEnvironment(environment: CloudEnvironment): void
 export function loadCloudEnvironmentFromSession(): CloudEnvironment {
   if (typeof window !== "undefined") {
     const stored = sessionStorage.getItem("cloudEnvironment");
-    if (stored && ["global", "usgov", "usgovdod", "germany", "china"].includes(stored)) {
+    if (stored && stored in CLOUD_ENVIRONMENTS) {
       selectedCloudEnvironment = stored as CloudEnvironment;
     }
   }

@@ -19,11 +19,7 @@ export default function ExplorerPage() {
   }, []);
 
   const handleNLQuery = useCallback((query: { method: string; url: string; body?: string }) => {
-    window.dispatchEvent(
-      new CustomEvent("select-query", {
-        detail: { method: query.method, url: query.url, body: query.body },
-      }),
-    );
+    window.dispatchEvent(new CustomEvent("select-query", { detail: query }));
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
