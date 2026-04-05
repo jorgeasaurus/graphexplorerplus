@@ -288,8 +288,12 @@ export function ModifyPermissions({ method, url }: ModifyPermissionsProps) {
                 <td className="px-4 py-3 text-right">
                   <button
                     onClick={() => void handleConsent(scope)}
-                    disabled={isConsenting}
-                    className="inline-flex h-8 items-center rounded-lg bg-accent px-4 text-xs font-semibold text-bg-deep transition-colors hover:bg-accent-hover disabled:opacity-50"
+                    disabled={consented || isConsenting}
+                    className={`inline-flex h-8 items-center rounded-lg px-4 text-xs font-semibold transition-colors ${
+                      consented
+                        ? "cursor-default bg-bg-elevated text-text-muted"
+                        : "bg-accent text-bg-deep hover:bg-accent-hover disabled:opacity-50"
+                    }`}
                   >
                     {isConsenting ? (
                       <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
