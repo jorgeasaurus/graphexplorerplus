@@ -29,6 +29,19 @@ function parseScopesFromError(body: string): string[] {
     }
   }
 
+  // Pattern: "API required scopes: X,Y,Z" (comma-separated, no spaces)
+  const apiRequiredMatch = body.match(
+    /API\s+required\s+scopes?:\s*([A-Za-z0-9._,\s-]+?)(?:,\s*application\s+scopes|[.]\s|$)/i,
+  );
+  if (apiRequiredMatch?.[1] && scopes.length === 0) {
+    const candidates = apiRequiredMatch[1].split(",").map((s) => s.trim()).filter(Boolean);
+    for (const c of candidates) {
+      if (/^[A-Za-z][A-Za-z0-9._-]+\.[A-Za-z]+$/.test(c)) {
+        scopes.push(c);
+      }
+    }
+  }
+
   // Pattern: individual scope references like "Scope: Mail.Read"
   const singleMatch = body.match(/(?:Required\s+scope|Scope):\s*([A-Za-z][A-Za-z0-9._-]+\.[A-Za-z]+)/i);
   if (singleMatch?.[1] && !scopes.includes(singleMatch[1])) {
