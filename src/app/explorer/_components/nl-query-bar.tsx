@@ -44,6 +44,55 @@ const EXAMPLES = [
   "List apps with expiring secrets",
   "Get all Intune PowerShell scripts",
   "Show risky sign-ins from today",
+  "Get all groups I'm a member of",
+  "List all security alerts",
+  "Show me my calendar events for this week",
+  "Get all device configuration profiles",
+  "List all app registrations in my tenant",
+  "Show users with admin roles",
+  "Find devices running Windows 11",
+  "Get all SharePoint sites",
+];
+
+const EXAMPLE_CATEGORIES: { label: string; items: string[] }[] = [
+  {
+    label: "Identity",
+    items: [
+      "List users whose accounts are disabled",
+      "Show users with admin roles",
+      "Get all groups I'm a member of",
+      "List all app registrations in my tenant",
+      "List apps with expiring secrets",
+    ],
+  },
+  {
+    label: "Intune",
+    items: [
+      "Show me all non-compliant devices",
+      "Find devices running Windows 11",
+      "Get all device configuration profiles",
+      "Find Windows Autopilot devices",
+      "Get all Intune PowerShell scripts",
+    ],
+  },
+  {
+    label: "Security",
+    items: [
+      "Get all Conditional Access policies",
+      "Show risky sign-ins from today",
+      "List all security alerts",
+      "Show risky users in my tenant",
+    ],
+  },
+  {
+    label: "Productivity",
+    items: [
+      "Show my recent Teams messages",
+      "Show me my calendar events for this week",
+      "Get all SharePoint sites",
+      "List my recent emails",
+    ],
+  },
 ];
 
 export function NLQueryBar({ onQueryGenerated }: NLQueryBarProps) {
@@ -51,7 +100,9 @@ export function NLQueryBar({ onQueryGenerated }: NLQueryBarProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [placeholder, setPlaceholder] = useState("");
+  const [showExamples, setShowExamples] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const configured = isAIConfigured();
 
   // Rotating placeholder examples
@@ -65,15 +116,35 @@ export function NLQueryBar({ onQueryGenerated }: NLQueryBarProps) {
     return () => clearInterval(interval);
   }, []);
 
-  async function handleSubmit() {
-    const text = prompt.trim();
-    if (!text || isLoading) return;
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showExamples) return;
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowExamples(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showExamples]);
 
+  function selectExample(text: string) {
+    setPrompt(text);
+    setShowExamples(false);
+    inputRef.current?.focus();
+  }
+
+  async function handleSubmit(text?: string) {
+    const query = (text ?? prompt).trim();
+    if (!query || isLoading) return;
+
+    setPrompt(query);
     setIsLoading(true);
     setError(null);
+    setShowExamples(false);
 
     try {
-      const result = await naturalLanguageToQuery(text);
+      const result = await naturalLanguageToQuery(query);
       onQueryGenerated({
         method: result.method,
         url: result.url,
@@ -90,7 +161,7 @@ export function NLQueryBar({ onQueryGenerated }: NLQueryBarProps) {
   if (!configured) return null;
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="relative flex flex-col gap-1" ref={dropdownRef}>
       <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-deep px-3 py-2 transition-colors focus-within:border-accent/50 focus-within:ring-1 focus-within:ring-accent/30">
         <SparkleIcon
           className={`shrink-0 ${isLoading ? "animate-pulse text-accent" : "text-accent/60"}`}
@@ -109,6 +180,7 @@ export function NLQueryBar({ onQueryGenerated }: NLQueryBarProps) {
               void handleSubmit();
             }
           }}
+          onFocus={() => !prompt.trim() && setShowExamples(true)}
           placeholder={placeholder}
           disabled={isLoading}
           aria-label="Describe your query in plain English"
@@ -141,19 +213,65 @@ export function NLQueryBar({ onQueryGenerated }: NLQueryBarProps) {
             </svg>
             Thinking
           </div>
-        ) : prompt.trim() ? (
-          <button
-            onClick={() => void handleSubmit()}
-            className="shrink-0 rounded-md bg-accent/15 px-2.5 py-1 text-[11px] font-semibold text-accent transition-colors hover:bg-accent/25"
-          >
-            Generate
-          </button>
         ) : (
-          <span className="shrink-0 text-[10px] font-medium uppercase tracking-widest text-text-muted/40">
-            AI
-          </span>
+          <>
+            <button
+              onClick={() => setShowExamples((o) => !o)}
+              className="shrink-0 rounded-md px-1.5 py-1 text-text-muted transition-colors hover:bg-bg-hover hover:text-text-secondary"
+              aria-label="Show example queries"
+              title="Example queries"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M8 9h8M8 13h4m4-9H8a2 2 0 0 0-2 2v12l3-3h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {prompt.trim() ? (
+              <button
+                onClick={() => void handleSubmit()}
+                className="shrink-0 rounded-md bg-accent/15 px-2.5 py-1 text-[11px] font-semibold text-accent transition-colors hover:bg-accent/25"
+              >
+                Generate
+              </button>
+            ) : (
+              <span className="shrink-0 text-[10px] font-medium uppercase tracking-widest text-text-muted/40">
+                AI
+              </span>
+            )}
+          </>
         )}
       </div>
+
+      {/* Example queries dropdown */}
+      {showExamples && !isLoading && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-72 overflow-y-auto rounded-lg border border-border-default bg-bg-elevated shadow-xl">
+          {EXAMPLE_CATEGORIES.map((cat) => (
+            <div key={cat.label}>
+              <div className="sticky top-0 border-b border-border-subtle bg-bg-elevated px-3 py-1.5">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+                  {cat.label}
+                </span>
+              </div>
+              {cat.items.map((item) => (
+                <button
+                  key={item}
+                  onClick={() => selectExample(item)}
+                  onDoubleClick={() => void handleSubmit(item)}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary"
+                >
+                  <SparkleIcon className="shrink-0 text-accent/40" />
+                  {item}
+                </button>
+              ))}
+            </div>
+          ))}
+          <div className="border-t border-border-subtle px-3 py-2">
+            <span className="text-[10px] text-text-muted">
+              Click to fill, double-click to run instantly
+            </span>
+          </div>
+        </div>
+      )}
+
       {error && (
         <p className="px-1 text-[11px] text-error">{error}</p>
       )}
