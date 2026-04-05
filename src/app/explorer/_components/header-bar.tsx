@@ -103,9 +103,6 @@ export function HeaderBar() {
             aria-label="Cloud environment"
             aria-expanded={cloudOpen}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2a8 8 0 0 1 5.29 2H6.71A8 8 0 0 1 12 4ZM4 12a8 8 0 0 1 .34-2.3h15.32A8 8 0 0 1 20 12a8 8 0 0 1-.34 2.3H4.34A8 8 0 0 1 4 12Zm2.71 6h10.58A8 8 0 0 1 12 20a8 8 0 0 1-5.29-2Z" fill="currentColor" opacity="0.5" />
-            </svg>
             {CLOUD_OPTIONS.find((o) => o.id === cloudEnv)?.label ?? "Global"}
           </button>
 
