@@ -106,6 +106,113 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
       { method: "GET", path: "/v1.0/identity/conditionalAccess/policies", name: "Conditional Access policies" },
     ],
   },
+  {
+    name: "Intune - Devices",
+    queries: [
+      { method: "GET", path: "/v1.0/deviceManagement/managedDevices", name: "All managed devices" },
+      { method: "GET", path: "/v1.0/deviceManagement/managedDevices?$filter=operatingSystem eq 'Windows'", name: "Windows devices" },
+      { method: "GET", path: "/v1.0/deviceManagement/managedDevices?$filter=operatingSystem eq 'iOS'", name: "iOS devices" },
+      { method: "GET", path: "/v1.0/deviceManagement/managedDevices?$filter=operatingSystem eq 'Android'", name: "Android devices" },
+      { method: "GET", path: "/v1.0/deviceManagement/managedDevices?$filter=complianceState eq 'noncompliant'", name: "Non-compliant devices" },
+      { method: "GET", path: "/v1.0/deviceManagement/managedDevices?$select=deviceName,operatingSystem,osVersion,complianceState,lastSyncDateTime,userPrincipalName", name: "Devices (key fields)" },
+      { method: "GET", path: "/v1.0/deviceManagement/managedDevices/{managedDevice-id}", name: "Get device by ID" },
+      { method: "GET", path: "/beta/deviceManagement/managedDevices?$filter=managedDeviceOwnerType eq 'company'", name: "Corporate-owned devices" },
+      { method: "POST", path: "/v1.0/deviceManagement/managedDevices/{managedDevice-id}/syncDevice", name: "Sync device" },
+      { method: "POST", path: "/v1.0/deviceManagement/managedDevices/{managedDevice-id}/rebootNow", name: "Reboot device" },
+      { method: "POST", path: "/v1.0/deviceManagement/managedDevices/{managedDevice-id}/retire", name: "Retire device" },
+      { method: "POST", path: "/v1.0/deviceManagement/managedDevices/{managedDevice-id}/wipe", name: "Wipe device" },
+    ],
+  },
+  {
+    name: "Intune - Compliance",
+    queries: [
+      { method: "GET", path: "/v1.0/deviceManagement/deviceCompliancePolicies", name: "All compliance policies" },
+      { method: "GET", path: "/v1.0/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}/deviceStatuses", name: "Policy device statuses" },
+      { method: "GET", path: "/v1.0/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}/assignments", name: "Policy assignments" },
+      { method: "GET", path: "/v1.0/deviceManagement/deviceCompliancePolicyDeviceStateSummary", name: "Compliance state summary" },
+      { method: "GET", path: "/beta/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}/deviceSettingStateSummaries", name: "Setting state summaries" },
+    ],
+  },
+  {
+    name: "Intune - Configuration",
+    queries: [
+      { method: "GET", path: "/v1.0/deviceManagement/deviceConfigurations", name: "All config profiles" },
+      { method: "GET", path: "/v1.0/deviceManagement/deviceConfigurations/{deviceConfiguration-id}/assignments", name: "Profile assignments" },
+      { method: "GET", path: "/v1.0/deviceManagement/deviceConfigurations/{deviceConfiguration-id}/deviceStatuses", name: "Profile device statuses" },
+      { method: "GET", path: "/beta/deviceManagement/configurationPolicies", name: "Settings Catalog policies" },
+      { method: "GET", path: "/beta/deviceManagement/configurationPolicies/{deviceManagementConfigurationPolicy-id}/settings", name: "Settings Catalog settings" },
+      { method: "GET", path: "/beta/deviceManagement/groupPolicyConfigurations", name: "Group Policy (ADMX)" },
+      { method: "GET", path: "/beta/deviceManagement/templates", name: "Security baselines" },
+      { method: "GET", path: "/beta/deviceManagement/intents", name: "Endpoint security intents" },
+    ],
+  },
+  {
+    name: "Intune - Apps",
+    queries: [
+      { method: "GET", path: "/v1.0/deviceAppManagement/mobileApps", name: "All mobile apps" },
+      { method: "GET", path: "/v1.0/deviceAppManagement/mobileApps?$filter=isOf('microsoft.graph.win32LobApp')", name: "Win32 apps" },
+      { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.winGetApp", name: "WinGet apps" },
+      { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.iosStoreApp", name: "iOS Store apps" },
+      { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.androidManagedStoreApp", name: "Android Managed apps" },
+      { method: "GET", path: "/v1.0/deviceAppManagement/mobileApps/{mobileApp-id}/assignments", name: "App assignments" },
+      { method: "GET", path: "/beta/deviceAppManagement/mobileApps/{mobileApp-id}/deviceStatuses", name: "App install statuses" },
+      { method: "GET", path: "/v1.0/deviceAppManagement/mobileAppCategories", name: "App categories" },
+      { method: "GET", path: "/v1.0/deviceAppManagement/mobileAppConfigurations", name: "App config policies" },
+    ],
+  },
+  {
+    name: "Intune - App Protection",
+    queries: [
+      { method: "GET", path: "/v1.0/deviceAppManagement/managedAppPolicies", name: "All app protection policies" },
+      { method: "GET", path: "/v1.0/deviceAppManagement/androidManagedAppProtections", name: "Android app protection" },
+      { method: "GET", path: "/v1.0/deviceAppManagement/iosManagedAppProtections", name: "iOS app protection" },
+      { method: "GET", path: "/v1.0/deviceAppManagement/mdmWindowsInformationProtectionPolicies", name: "Windows Info Protection" },
+      { method: "GET", path: "/v1.0/deviceAppManagement/managedAppRegistrations", name: "App registrations" },
+      { method: "GET", path: "/v1.0/deviceAppManagement/managedAppStatuses", name: "App protection status" },
+    ],
+  },
+  {
+    name: "Intune - Enrollment",
+    queries: [
+      { method: "GET", path: "/beta/deviceManagement/windowsAutopilotDeviceIdentities", name: "Autopilot devices" },
+      { method: "GET", path: "/beta/deviceManagement/windowsAutopilotDeploymentProfiles", name: "Autopilot profiles" },
+      { method: "GET", path: "/v1.0/deviceManagement/deviceEnrollmentConfigurations", name: "Enrollment configs" },
+      { method: "GET", path: "/beta/deviceManagement/depOnboardingSettings", name: "Apple DEP tokens" },
+      { method: "GET", path: "/beta/deviceManagement/applePushNotificationCertificate", name: "Apple push cert" },
+      { method: "GET", path: "/beta/deviceManagement/importedWindowsAutopilotDeviceIdentities", name: "Imported Autopilot devices" },
+    ],
+  },
+  {
+    name: "Intune - Scripts & Remediations",
+    queries: [
+      { method: "GET", path: "/beta/deviceManagement/deviceManagementScripts", name: "PowerShell scripts" },
+      { method: "GET", path: "/beta/deviceManagement/deviceShellScripts", name: "Shell scripts (macOS)" },
+      { method: "GET", path: "/beta/deviceManagement/deviceHealthScripts", name: "Proactive remediations" },
+      { method: "GET", path: "/beta/deviceManagement/deviceCustomAttributeShellScripts", name: "Custom attribute scripts" },
+      { method: "GET", path: "/beta/deviceManagement/deviceManagementScripts/{deviceManagementScript-id}/deviceRunStates", name: "Script run states" },
+    ],
+  },
+  {
+    name: "Intune - Reporting",
+    queries: [
+      { method: "GET", path: "/v1.0/deviceManagement/reports", name: "Reports overview" },
+      { method: "GET", path: "/v1.0/deviceManagement/auditEvents", name: "Audit events" },
+      { method: "GET", path: "/v1.0/deviceManagement/detectedApps", name: "Detected apps" },
+      { method: "GET", path: "/beta/deviceManagement/managedDeviceOverview", name: "Device overview" },
+      { method: "POST", path: "/beta/deviceManagement/reports/getDeviceNonComplianceReport", name: "Non-compliance report" },
+      { method: "POST", path: "/beta/deviceManagement/reports/getConfigurationPolicyNonComplianceReport", name: "Config policy report" },
+      { method: "GET", path: "/beta/deviceManagement/virtualEndpoint/cloudPCs", name: "Cloud PCs" },
+    ],
+  },
+  {
+    name: "Intune - RBAC",
+    queries: [
+      { method: "GET", path: "/v1.0/deviceManagement/roleDefinitions", name: "Role definitions" },
+      { method: "GET", path: "/v1.0/deviceManagement/roleAssignments", name: "Role assignments" },
+      { method: "GET", path: "/beta/deviceManagement/resourceOperations", name: "Resource operations" },
+      { method: "GET", path: "/beta/deviceManagement/roleScopeTags", name: "Scope tags" },
+    ],
+  },
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────
