@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useCallback, useId } from "react";
+import { useIsAuthenticated } from "@azure/msal-react";
+import { createGraphClient } from "~/lib/graph/client";
+import type { GraphResponse } from "~/lib/graph/client";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 type Tab = "headers" | "body" | "params" | "auth";
@@ -215,21 +218,27 @@ function BodyEditor({
 
 // ─── Auth Tab ────────────────────────────────────────────────────────
 
-function AuthTab() {
+function AuthTab({ authenticated }: { authenticated: boolean }) {
   return (
     <div className="flex flex-col gap-4 px-4 py-4">
       {/* Status card */}
       <div className="flex items-center gap-3 rounded border border-border-subtle bg-bg-elevated px-4 py-3">
         <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-50" />
-          <span className="inline-flex h-2 w-2 rounded-full bg-warning" />
+          {!authenticated && (
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-50" />
+          )}
+          <span
+            className={`inline-flex h-2 w-2 rounded-full ${authenticated ? "bg-success" : "bg-warning"}`}
+          />
         </span>
         <div>
           <p className="text-xs font-medium text-text-primary">
-            Not authenticated
+            {authenticated ? "Authenticated" : "Not authenticated"}
           </p>
           <p className="text-[11px] text-text-muted">
-            Sign in to send authenticated requests
+            {authenticated
+              ? "Bearer token will be attached to requests automatically"
+              : "Sign in to send authenticated requests"}
           </p>
         </div>
       </div>
@@ -270,7 +279,11 @@ function Spinner() {
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export default function QueryBuilder() {
+export default function QueryBuilder({
+  onResponse,
+}: {
+  onResponse?: (response: GraphResponse | null) => void;
+}) {
   const uid = useId();
 
   const [method, setMethod] = useState<HttpMethod>("GET");
@@ -285,6 +298,8 @@ export default function QueryBuilder() {
   const [body, setBody] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [authWarning, setAuthWarning] = useState(false);
+  const authenticated = useIsAuthenticated();
 
   const handleMethodChange = useCallback(
     (m: HttpMethod) => {
@@ -297,10 +312,46 @@ export default function QueryBuilder() {
     [],
   );
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
+    if (!authenticated) {
+      setAuthWarning(true);
+      setTimeout(() => setAuthWarning(false), 2000);
+      return;
+    }
+    setAuthWarning(false);
     setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 1500);
-  }, []);
+    onResponse?.(null);
+
+    try {
+      const parsedHeaders: Record<string, string> = {};
+      for (const row of headers) {
+        if (row.enabled && row.key.trim()) {
+          parsedHeaders[row.key.trim()] = row.value;
+        }
+      }
+
+      const client = createGraphClient();
+      const result = await client.executeRequest({
+        method,
+        url,
+        headers: parsedHeaders,
+        body: BODY_METHODS.includes(method) ? body : undefined,
+      });
+      onResponse?.(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      onResponse?.({
+        status: 0,
+        statusText: "Error",
+        headers: {},
+        body: JSON.stringify({ error: message }, null, 2),
+        timeMs: 0,
+        sizeBytes: 0,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [authenticated, method, url, headers, body, onResponse]);
 
   const style = METHOD_STYLES[method];
 
@@ -371,7 +422,7 @@ export default function QueryBuilder() {
 
         {/* Send button */}
         <button
-          onClick={handleSend}
+          onClick={() => void handleSend()}
           disabled={isLoading}
           className="flex h-[30px] items-center gap-1.5 rounded bg-accent px-5 font-sans text-xs font-semibold text-bg-deep transition-colors hover:bg-accent-hover disabled:opacity-70"
         >
@@ -388,7 +439,7 @@ export default function QueryBuilder() {
               />
             </svg>
           )}
-          Send
+          {authWarning ? "Sign in first" : "Send"}
         </button>
       </div>
 
@@ -439,7 +490,7 @@ export default function QueryBuilder() {
           />
         )}
 
-        {activeTab === "auth" && <AuthTab />}
+        {activeTab === "auth" && <AuthTab authenticated={authenticated} />}
       </div>
     </div>
   );

@@ -1,14 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import QueryBuilder from "./_components/query-builder";
 import { ResponseViewer } from "./_components/response-viewer";
+import type { GraphResponse } from "~/lib/graph/client";
 
 export default function ExplorerPage() {
+  const [response, setResponse] = useState<GraphResponse | null | undefined>(undefined);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-0">
       {/* Request Panel – 45% */}
       <div className="flex basis-[45%] flex-col overflow-hidden rounded-t-lg border border-border-default bg-bg-surface">
-        <QueryBuilder />
+        <QueryBuilder onResponse={setResponse} />
       </div>
 
       {/* Draggable Divider */}
@@ -19,7 +23,7 @@ export default function ExplorerPage() {
 
       {/* Response Panel – 55% */}
       <div className="flex basis-[55%] flex-col overflow-hidden rounded-b-lg border border-border-default bg-bg-surface">
-        <ResponseViewer />
+        <ResponseViewer response={response} />
       </div>
     </div>
   );

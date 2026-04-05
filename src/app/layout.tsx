@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Instrument_Sans, JetBrains_Mono } from "next/font/google";
 
 import { TRPCReactProvider } from "~/trpc/react";
+import { MsalProvider } from "~/components/auth/MsalProvider";
 
 export const metadata: Metadata = {
   title: "Graph Explorer Plus",
@@ -30,7 +31,9 @@ export default function RootLayout({
       className={`dark ${instrumentSans.variable} ${jetbrainsMono.variable}`}
     >
       <body>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <MsalProvider>
+          <TRPCReactProvider>{children}</TRPCReactProvider>
+        </MsalProvider>
       </body>
     </html>
   );

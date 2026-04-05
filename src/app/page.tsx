@@ -1,4 +1,9 @@
+"use client";
+
 import Link from "next/link";
+import { useIsAuthenticated, useMsal } from "@azure/msal-react";
+import { InteractionStatus } from "@azure/msal-browser";
+import { signIn, signOut } from "~/lib/auth/authUtils";
 
 const features = [
   {
@@ -76,6 +81,11 @@ const features = [
 ];
 
 export default function Home() {
+  const isAuth = useIsAuthenticated();
+  const { accounts, inProgress } = useMsal();
+  const displayName = accounts[0]?.name;
+  const isLoading = inProgress !== InteractionStatus.None;
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-bg-deep font-sans text-text-primary">
       {/* ── Grid background ── */}
@@ -108,12 +118,28 @@ export default function Home() {
             <span className="hidden sm:inline">Graph Explorer<span className="text-accent">+</span></span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link
-              href="/api/auth/signin"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary transition hover:text-text-primary"
-            >
-              Sign In
-            </Link>
+            {isLoading ? (
+              <span className="px-4 py-2 text-sm text-text-muted">Signing in…</span>
+            ) : isAuth ? (
+              <>
+                <span className="px-4 py-2 text-sm font-medium text-text-secondary">
+                  {displayName}
+                </span>
+                <button
+                  onClick={() => void signOut()}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary transition hover:text-text-primary"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => void signIn()}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary transition hover:text-text-primary"
+              >
+                Sign In
+              </button>
+            )}
             <Link
               href="/explorer"
               className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-bg-deep transition hover:bg-accent-hover"

@@ -16,7 +16,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@auth/prisma-adapter": "^2.7.2",
+    "@azure/msal-browser": "^3.30.0",
+    "@azure/msal-react": "^2.2.0",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
     "@prisma/client": "^6.6.0",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@tanstack/react-query": "^5.69.0",
@@ -24,7 +26,6 @@
     "@trpc/react-query": "^11.0.0",
     "@trpc/server": "^11.0.0",
     "next": "^15.2.3",
-    "next-auth": "5.0.0-beta.25",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "server-only": "^0.0.1",

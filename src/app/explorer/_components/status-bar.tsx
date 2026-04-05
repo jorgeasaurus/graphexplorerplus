@@ -1,16 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useIsAuthenticated } from "@azure/msal-react";
 
 export function StatusBar() {
   const [apiVersion, setApiVersion] = useState<"v1.0" | "beta">("v1.0");
+  const isAuth = useIsAuthenticated();
 
   return (
     <footer className="flex h-6 shrink-0 items-center justify-between border-t border-border-subtle bg-bg-deep px-3 font-mono text-xs text-text-tertiary">
       {/* Left: Connection status */}
       <div className="flex items-center gap-1.5">
-        <span className="h-1.5 w-1.5 rounded-full bg-success" />
-        <span>Ready</span>
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${isAuth ? "bg-success" : "bg-warning"}`}
+        />
+        <span>{isAuth ? "Connected" : "Not connected"}</span>
       </div>
 
       {/* Right: API version toggle */}

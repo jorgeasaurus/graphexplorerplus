@@ -1,6 +1,25 @@
 "use client";
 
+import { useIsAuthenticated, useMsal } from "@azure/msal-react";
+import { InteractionStatus } from "@azure/msal-browser";
+import { signIn, signOut } from "~/lib/auth/authUtils";
+
+function getInitials(name: string | undefined): string {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 export function HeaderBar() {
+  const isAuth = useIsAuthenticated();
+  const { accounts, inProgress } = useMsal();
+  const displayName = accounts[0]?.name;
+  const isLoading = inProgress !== InteractionStatus.None;
+
   return (
     <header className="flex h-12 shrink-0 items-center justify-between border-b border-border-subtle bg-bg-deep px-4">
       {/* Left: Logo */}
@@ -54,27 +73,46 @@ export function HeaderBar() {
 
         <div className="h-5 w-px bg-border-subtle" />
 
-        <button
-          className="flex h-7 items-center gap-2 rounded px-2 text-xs text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary"
-          aria-label="Sign in"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <circle
-              cx="12"
-              cy="8"
-              r="4"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-            <path
-              d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
-          <span>Sign in</span>
-        </button>
+        {isLoading ? (
+          <span className="text-xs text-text-muted">Signing in…</span>
+        ) : isAuth ? (
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/20 text-[10px] font-bold text-accent">
+              {getInitials(displayName)}
+            </span>
+            <span className="text-xs text-text-secondary">{displayName}</span>
+            <button
+              onClick={() => void signOut()}
+              className="flex h-7 items-center rounded px-2 text-xs text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary"
+              aria-label="Sign out"
+            >
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => void signIn()}
+            className="flex h-7 items-center gap-2 rounded px-2 text-xs text-accent transition-colors hover:bg-bg-hover hover:text-text-primary"
+            aria-label="Sign in"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle
+                cx="12"
+                cy="8"
+                r="4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+            <span>Sign In</span>
+          </button>
+        )}
       </div>
     </header>
   );

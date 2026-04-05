@@ -15,43 +15,6 @@ interface ResponseData {
 
 type TabId = "body" | "headers" | "preview";
 
-// ── Mock data ──────────────────────────────────────────────
-
-const MOCK_BODY = JSON.stringify(
-  {
-    displayName: "Jorge Saldana",
-    mail: "jorge@contoso.com",
-    id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    jobTitle: "Software Engineer",
-    officeLocation: "Building 42",
-    userPrincipalName: "jorge@contoso.com",
-    "@odata.context":
-      "https://graph.microsoft.com/v1.0/$metadata#users/$entity",
-  },
-  null,
-  2,
-);
-
-const MOCK_HEADERS: Record<string, string> = {
-  "content-type": "application/json; odata.metadata=minimal",
-  "x-request-id": "e4f7a1b2-9c3d-4e5f-8a6b-7c8d9e0f1a2b",
-  date: new Date().toUTCString(),
-  "cache-control": "no-cache",
-  "odata-version": "4.0",
-  "strict-transport-security": "max-age=31536000",
-  "x-ms-resource-unit": "1",
-  "x-ms-gateway-serviceroot": "",
-};
-
-const MOCK_RESPONSE: ResponseData = {
-  status: 200,
-  statusText: "OK",
-  timeMs: 145,
-  sizeBytes: new Blob([MOCK_BODY]).size,
-  body: MOCK_BODY,
-  headers: MOCK_HEADERS,
-};
-
 const TABS = [
   { id: "body" as const, label: "Body" },
   { id: "headers" as const, label: "Headers" },
@@ -302,9 +265,31 @@ function EmptyState() {
 }
 
 function BodyTab({ body }: { body: string }) {
-  const highlighted = highlightJson(body);
-  const lineCount = body.split("\n").length;
+  // Try to pretty-print JSON; fall back to raw text
+  let displayBody = body;
+  try {
+    const parsed: unknown = JSON.parse(body);
+    displayBody = JSON.stringify(parsed, null, 2);
+  } catch {
+    // Not JSON — display as raw text
+  }
+
+  const isJson = displayBody !== body || (body.trimStart().startsWith("{") || body.trimStart().startsWith("["));
+  const lines = displayBody.split("\n");
+  const lineCount = lines.length;
   const gutterWidth = String(lineCount).length;
+
+  if (!isJson) {
+    return (
+      <div className="flex-1 overflow-auto">
+        <pre className="whitespace-pre-wrap p-4 font-mono text-xs leading-5 text-text-primary">
+          {displayBody}
+        </pre>
+      </div>
+    );
+  }
+
+  const highlighted = highlightJson(displayBody);
 
   return (
     <div className="flex-1 overflow-auto">
@@ -364,7 +349,7 @@ function PreviewTab() {
 // ── Main Component ─────────────────────────────────────────
 
 export function ResponseViewer({
-  response = MOCK_RESPONSE,
+  response,
 }: {
   response?: ResponseData | null;
 }) {
@@ -378,7 +363,19 @@ export function ResponseViewer({
     setTimeout(() => setCopied(false), 1500);
   }, [response]);
 
-  if (!response) return <EmptyState />;
+  if (response === undefined) return <EmptyState />;
+
+  if (response === null) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 py-16">
+        <svg className="h-6 w-6 animate-spin text-accent" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" className="opacity-20" />
+          <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+        <p className="text-xs text-text-muted">Loading…</p>
+      </div>
+    );
+  }
 
   const { badge, text } = statusColorClasses(response.status);
 
