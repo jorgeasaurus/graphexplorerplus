@@ -105,7 +105,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     ],
   },
   {
-    name: "OneDrive & SharePoint",
+    name: "OneDrive / SharePoint",
     queries: [
       { method: "GET", path: "/v1.0/me/drive", name: "My drive" },
       { method: "GET", path: "/v1.0/me/drive/root/children", name: "Root folder items" },
@@ -120,7 +120,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     ],
   },
   {
-    name: "Planner & Tasks",
+    name: "Planner / Tasks",
     queries: [
       { method: "GET", path: "/v1.0/me/planner/tasks", name: "My Planner tasks" },
       { method: "GET", path: "/v1.0/groups/{group-id}/planner/plans", name: "Group plans" },
@@ -131,7 +131,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     ],
   },
   {
-    name: "Applications & Service Principals",
+    name: "App Registrations",
     queries: [
       { method: "GET", path: "/v1.0/applications", name: "List applications" },
       { method: "GET", path: "/v1.0/applications?$filter=signInAudience eq 'AzureADMultipleOrgs'", name: "Multi-tenant apps" },
@@ -144,7 +144,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     ],
   },
   {
-    name: "Entra ID - Identity",
+    name: "Entra ID",
     queries: [
       { method: "GET", path: "/v1.0/identity/conditionalAccess/policies", name: "Conditional Access policies" },
       { method: "GET", path: "/v1.0/identity/conditionalAccess/namedLocations", name: "Named locations" },
@@ -158,7 +158,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     ],
   },
   {
-    name: "Directory & Roles",
+    name: "Directory Roles",
     queries: [
       { method: "GET", path: "/v1.0/directoryRoles", name: "Active directory roles" },
       { method: "GET", path: "/v1.0/directoryRoles/{directoryRole-id}/members", name: "Role members" },
@@ -172,7 +172,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     ],
   },
   {
-    name: "Security & Compliance",
+    name: "Security",
     queries: [
       { method: "GET", path: "/v1.0/security/alerts_v2", name: "Security alerts" },
       { method: "GET", path: "/v1.0/security/incidents", name: "Security incidents" },
@@ -186,7 +186,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     ],
   },
   {
-    name: "Reports & Analytics",
+    name: "Reports",
     queries: [
       { method: "GET", path: "/v1.0/reports/getEmailActivityUserDetail(period='D7')", name: "Email activity (7 days)" },
       { method: "GET", path: "/v1.0/reports/getOffice365ActiveUserDetail(period='D30')", name: "Active users (30 days)" },
@@ -199,7 +199,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     ],
   },
   {
-    name: "Notifications & Subscriptions",
+    name: "Subscriptions",
     queries: [
       { method: "GET", path: "/v1.0/subscriptions", name: "Active subscriptions" },
       { method: "POST", path: "/v1.0/subscriptions", name: "Create subscription" },
@@ -238,7 +238,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     ],
   },
   {
-    name: "Intune - Configuration",
+    name: "Intune - Config",
     queries: [
       { method: "GET", path: "/v1.0/deviceManagement/deviceConfigurations", name: "All config profiles" },
       { method: "GET", path: "/v1.0/deviceManagement/deviceConfigurations/{deviceConfiguration-id}/assignments", name: "Profile assignments" },
@@ -268,7 +268,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     ],
   },
   {
-    name: "Intune - App Protection",
+    name: "Intune - MAM",
     queries: [
       { method: "GET", path: "/v1.0/deviceAppManagement/managedAppPolicies", name: "All app protection policies" },
       { method: "GET", path: "/v1.0/deviceAppManagement/androidManagedAppProtections", name: "Android app protection" },
@@ -313,7 +313,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     ],
   },
   {
-    name: "Intune - Filters & Assignments",
+    name: "Intune - Filters",
     queries: [
       { method: "GET", path: "/beta/deviceManagement/assignmentFilters", name: "Assignment filters" },
       { method: "GET", path: "/beta/deviceManagement/assignmentFilters/{deviceAndAppManagementAssignmentFilter-id}", name: "Filter details" },
