@@ -6,7 +6,6 @@ import { InteractionStatus } from "@azure/msal-browser";
 import { signIn, signOut, setSelectedCloudEnvironment, getSelectedCloudEnvironment } from "~/lib/auth/authUtils";
 import { type CloudEnvironment } from "~/lib/auth/msalConfig";
 import { ThemeToggle } from "~/components/theme-toggle";
-import { Logo } from "~/components/logo";
 
 function getInitials(name: string | undefined): string {
   if (!name) return "?";
@@ -60,10 +59,9 @@ export function HeaderBar() {
 
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-border-subtle bg-bg-deep px-4 sm:px-5">
-      {/* Left: Logo */}
-      <a href="/" className="flex items-center gap-2.5" aria-label="Home">
-        <Logo size={28} className="text-accent" />
-        <span className="font-sans text-sm font-bold tracking-tight text-text-primary">
+      {/* Left: Title */}
+      <a href="/" className="flex items-center" aria-label="Home">
+        <span className="font-sans text-lg font-bold tracking-tight text-text-primary">
           Graph Explorer<span className="text-accent">+</span>
         </span>
       </a>
