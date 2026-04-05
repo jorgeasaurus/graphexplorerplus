@@ -14,7 +14,12 @@ export function CopyButton({
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
-    await navigator.clipboard.writeText(text);
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Clipboard API unavailable in non-secure contexts
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }, [text]);

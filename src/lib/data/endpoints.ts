@@ -21,6 +21,10 @@ export async function loadEndpoints(): Promise<EndpointIndex> {
     .then((data: EndpointIndex) => {
       cache = data;
       return data;
+    })
+    .catch((err) => {
+      loading = null;
+      throw err;
     });
 
   return loading;

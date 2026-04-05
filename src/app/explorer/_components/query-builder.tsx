@@ -679,11 +679,12 @@ export default function QueryBuilder({
             shareUrl.searchParams.set("u", url);
             shareUrl.searchParams.set("v", apiVersion);
             if (body && BODY_METHODS.includes(method)) shareUrl.searchParams.set("b", body);
-            void navigator.clipboard.writeText(shareUrl.toString());
+            navigator.clipboard.writeText(shareUrl.toString()).catch(() => {});
             setShareCopied(true);
             setTimeout(() => setShareCopied(false), 1500);
           }}
           title="Copy shareable link"
+          aria-label="Copy shareable link"
           className="flex h-9 w-9 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary"
         >
           {shareCopied ? (

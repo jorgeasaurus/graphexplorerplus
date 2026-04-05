@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { consentToScopes } from "~/lib/auth/authUtils";
 import { loadPermissions, lookupPermissions } from "~/lib/data/permissions";
 
@@ -66,23 +66,21 @@ export function ConsentBanner({ status, body, method, url, onRetry }: ConsentBan
   const [consentError, setConsentError] = useState<string | null>(null);
   const [consented, setConsented] = useState(false);
 
-  // Parse scopes from the error, and also look up known scopes for this endpoint
-  const { errorScopes, knownScopes } = useMemo(() => {
-    const fromError = parseScopesFromError(body);
+  // Parse scopes from the error response (synchronous)
+  const errorScopes = useMemo(() => parseScopesFromError(body), [body]);
 
-    // Also try to resolve from our permissions index (async, but we use cached data)
-    let fromIndex: string[] = [];
+  // Look up known scopes for this endpoint (async)
+  const [knownScopes, setKnownScopes] = useState<string[]>([]);
+  useEffect(() => {
+    let cancelled = false;
     const path = extractGraphPath(url);
-    // loadPermissions returns cached data synchronously if already loaded
-    void loadPermissions().then((index) => {
+    loadPermissions().then((index) => {
+      if (cancelled) return;
       const perms = lookupPermissions(index, method, path);
-      if (perms?.delegatedWork) {
-        fromIndex = perms.delegatedWork;
-      }
+      setKnownScopes(perms?.delegatedWork ?? []);
     });
-
-    return { errorScopes: fromError, knownScopes: fromIndex };
-  }, [body, method, url]);
+    return () => { cancelled = true; };
+  }, [method, url]);
 
   // Don't render if not a 403
   if (status !== 403) return null;

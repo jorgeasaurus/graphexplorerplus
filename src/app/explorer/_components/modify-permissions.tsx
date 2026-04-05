@@ -143,7 +143,9 @@ function decodeTokenScopes(token: string): Set<string> {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return new Set();
-    const payload = JSON.parse(atob(parts[1]!.replace(/-/g, "+").replace(/_/g, "/"))) as Record<string, unknown>;
+    const base64 = parts[1]!.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+    const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
     const scp = payload.scp as string | undefined;
     if (!scp) return new Set();
     return new Set(scp.split(" ").map((s) => s.trim()).filter(Boolean));

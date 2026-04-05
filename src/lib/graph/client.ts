@@ -72,10 +72,12 @@ export class GraphClient {
       const buf = await response.arrayBuffer();
       sizeBytes = buf.byteLength;
       const bytes = new Uint8Array(buf);
-      let binary = "";
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]!);
+      const CHUNK_SIZE = 8192;
+      const chunks: string[] = [];
+      for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+        chunks.push(String.fromCharCode(...bytes.subarray(i, i + CHUNK_SIZE)));
       }
+      const binary = chunks.join("");
       const mimeType = contentType.split(";")[0]!.trim();
       responseBody = `data:${mimeType};base64,${btoa(binary)}`;
     } else {

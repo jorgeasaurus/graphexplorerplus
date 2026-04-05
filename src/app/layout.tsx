@@ -9,7 +9,10 @@ import { MsalProvider } from "~/components/auth/MsalProvider";
 export const metadata: Metadata = {
   title: "Graph Explorer Plus",
   description: "A power-user Microsoft Graph API explorer",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [
+    { rel: "icon", url: "/favicon.svg", type: "image/svg+xml" },
+    { rel: "icon", url: "/favicon.ico", sizes: "any" },
+  ],
 };
 
 const instrumentSans = Instrument_Sans({

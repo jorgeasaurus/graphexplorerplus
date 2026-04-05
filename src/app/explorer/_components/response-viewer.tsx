@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { CodeSnippets } from "./code-snippets";
 import { ConsentBanner } from "./consent-banner";
 import { CopyButton } from "~/components/copy-button";
@@ -281,6 +281,9 @@ function ImagePreview({ src }: { src: string }) {
   );
 }
 
+// Skip syntax highlighting for responses larger than 100 KB to prevent UI freezes
+const HIGHLIGHT_SIZE_LIMIT = 100 * 1024;
+
 function BodyTab({ body }: { body: string }) {
   if (isImageDataUrl(body)) {
     return <ImagePreview src={body} />;
@@ -320,6 +323,13 @@ function BodyTab({ body }: { body: string }) {
   const lines = displayBody.split("\n");
   const lineCount = lines.length;
   const gutterWidth = String(lineCount).length;
+  const tooLarge = displayBody.length > HIGHLIGHT_SIZE_LIMIT;
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const highlighted = useMemo(
+    () => (isJson && !tooLarge ? highlightJson(displayBody) : null),
+    [displayBody, isJson, tooLarge],
+  );
 
   if (!isJson) {
     return (
@@ -331,13 +341,24 @@ function BodyTab({ body }: { body: string }) {
     );
   }
 
-  const highlighted = highlightJson(displayBody);
+  if (tooLarge) {
+    return (
+      <div className="flex-1 overflow-auto">
+        <div className="mx-4 mt-3 rounded bg-warning/10 px-3 py-1.5 text-xs text-warning">
+          Syntax highlighting disabled for large responses (&gt;100 KB) to keep the UI responsive.
+        </div>
+        <pre className="whitespace-pre-wrap p-4 font-mono text-xs leading-5 text-text-primary">
+          {displayBody}
+        </pre>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-auto">
       <pre className="font-mono text-xs leading-5">
         <code>
-          {highlighted.map((tokens, idx) => (
+          {highlighted!.map((tokens, idx) => (
             <div key={idx} className="flex">
               <span
                 className="shrink-0 select-none border-r border-border-subtle pr-3 text-right text-text-muted"
@@ -444,6 +465,7 @@ export function ResponseViewer({
         <button
           onClick={() => setExpanded(true)}
           title="Expand response fullscreen"
+          aria-label="Expand response fullscreen"
           className="flex h-9 w-9 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -298,6 +298,7 @@ function Skeleton() {
 
 export function ResourceExplorer() {
   const [endpoints, setEndpoints] = useState<EndpointEntry[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [version, setVersion] = useState<ApiVersion>("v1.0");
@@ -305,7 +306,9 @@ export function ResourceExplorer() {
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
-    loadEndpoints().then((data) => setEndpoints(data.endpoints));
+    loadEndpoints()
+      .then((data) => setEndpoints(data.endpoints))
+      .catch(() => setLoadError("Failed to load endpoints"));
   }, []);
 
   useEffect(() => {
@@ -393,7 +396,11 @@ export function ResourceExplorer() {
 
       {/* Tree */}
       <div className="flex-1 overflow-y-auto px-1" role="tree">
-        {!endpoints ? (
+        {loadError ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-16">
+            <p className="text-xs text-red-400">{loadError}</p>
+          </div>
+        ) : !endpoints ? (
           <Skeleton />
         ) : !displayTree || displayTree.children.size === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-16">

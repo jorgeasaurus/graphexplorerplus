@@ -9,7 +9,8 @@ function decodeJwt(token: string): Record<string, unknown> | null {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
     const base64 = parts[1]!.replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(atob(base64)) as Record<string, unknown>;
+    const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+    return JSON.parse(atob(padded)) as Record<string, unknown>;
   } catch {
     return null;
   }
@@ -92,6 +93,7 @@ export function AccessTokenViewer() {
         <button
           onClick={() => setShowDecoded((v) => !v)}
           title={showDecoded ? "Show raw token" : "Decode token (JSON)"}
+          aria-label={showDecoded ? "Show raw token" : "Decode token (JSON)"}
           className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
             showDecoded
               ? "bg-accent-muted text-accent"
@@ -107,6 +109,7 @@ export function AccessTokenViewer() {
         <button
           onClick={() => void fetchToken()}
           title="Refresh token"
+          aria-label="Refresh token"
           className="flex h-8 w-8 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

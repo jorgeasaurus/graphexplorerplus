@@ -19,6 +19,10 @@ export async function loadPermissions(): Promise<PermissionsIndex> {
     .then((data: PermissionsIndex) => {
       cache = data;
       return data;
+    })
+    .catch((err) => {
+      loading = null;
+      throw err;
     });
   return loading;
 }

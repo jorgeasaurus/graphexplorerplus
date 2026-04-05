@@ -46,7 +46,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     queries: [
       { method: "GET", path: "/v1.0/users", name: "List all users" },
       { method: "GET", path: "/v1.0/users?$top=10&$select=displayName,mail", name: "Users (select fields)" },
-      { method: "GET", path: "/v1.0/users?$filter=startsWith(displayName,'A')", name: "Filter users by name" },
+      { method: "GET", path: "/v1.0/users?$filter=startswith(displayName,'A')", name: "Filter users by name" },
       { method: "GET", path: "/v1.0/users/{user-id}", name: "Get user by ID" },
       { method: "GET", path: "/v1.0/users?$count=true", name: "Count users" },
       { method: "GET", path: "/v1.0/users?$filter=accountEnabled eq false", name: "Disabled users" },

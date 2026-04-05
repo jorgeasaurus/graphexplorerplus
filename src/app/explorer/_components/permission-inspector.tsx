@@ -66,9 +66,13 @@ export function PermissionInspector({ method, url }: PermissionInspectorProps) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const lookup = useCallback(async (m: string, u: string) => {
-    const index = await loadPermissions();
-    const path = stripGraphPrefix(extractPath(u));
-    setPerms(lookupPermissions(index, m, path));
+    try {
+      const index = await loadPermissions();
+      const path = stripGraphPrefix(extractPath(u));
+      setPerms(lookupPermissions(index, m, path));
+    } catch {
+      setPerms(null);
+    }
   }, []);
 
   useEffect(() => {

@@ -512,7 +512,12 @@ export function CodeSnippets({ method, url, headers, body }: CodeSnippetsProps) 
   const gutterWidth = String(lineCount).length;
 
   const handleCopy = useCallback(async () => {
-    await navigator.clipboard.writeText(snippet);
+    try {
+      await navigator.clipboard.writeText(snippet);
+    } catch {
+      // Clipboard API unavailable in non-secure contexts
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }, [snippet]);
