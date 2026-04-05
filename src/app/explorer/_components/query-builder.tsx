@@ -296,9 +296,11 @@ function Spinner() {
 export default function QueryBuilder({
   onResponse,
   onRequest,
+  sendRef,
 }: {
   onResponse?: (response: GraphResponse | null) => void;
   onRequest?: (request: { method: string; url: string; headers?: Record<string, string>; body?: string }) => void;
+  sendRef?: React.MutableRefObject<(() => void) | null>;
 }) {
   const uid = useId();
 
@@ -510,6 +512,9 @@ export default function QueryBuilder({
       setIsLoading(false);
     }
   }, [authenticated, method, url, headers, body, onResponse, onRequest]);
+
+  // Expose send function to parent for retry-after-consent
+  if (sendRef) sendRef.current = () => void handleSend();
 
   const style = METHOD_STYLES[method];
 

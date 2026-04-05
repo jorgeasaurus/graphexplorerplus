@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { CodeSnippets } from "./code-snippets";
+import { ConsentBanner } from "./consent-banner";
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -430,9 +431,11 @@ function PreviewTab({ body }: { body: string }) {
 export function ResponseViewer({
   response,
   request,
+  onRetry,
 }: {
   response?: ResponseData | null;
   request?: RequestInfo;
+  onRetry?: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("body");
   const [copied, setCopied] = useState(false);
@@ -499,6 +502,17 @@ export function ResponseViewer({
           <DownloadIcon />
         </button>
       </div>
+
+      {/* ── Consent Banner (403 errors) ───────────────────── */}
+      {response.status === 403 && request && onRetry && (
+        <ConsentBanner
+          status={response.status}
+          body={response.body}
+          method={request.method}
+          url={request.url}
+          onRetry={onRetry}
+        />
+      )}
 
       {/* ── Tab Bar ───────────────────────────────────────── */}
       <div className="flex h-8 items-end gap-1 border-b border-border-subtle px-3">

@@ -66,6 +66,24 @@ export async function getAccessToken(scopes?: string[]): Promise<string> {
   }
 }
 
+/**
+ * Trigger incremental consent for additional scopes via popup.
+ * Used when a 403 indicates the user needs to grant more permissions.
+ */
+export async function consentToScopes(scopes: string[]): Promise<string> {
+  const account = getActiveAccount();
+  if (!account) throw new AuthSessionExpiredError();
+
+  const authority = getAuthorityUrl(selectedCloudEnvironment, account.tenantId);
+  const response = await msalInstance.acquireTokenPopup({
+    scopes,
+    account,
+    authority,
+    prompt: "consent",
+  });
+  return response.accessToken;
+}
+
 export async function signIn(cloudEnvironment: CloudEnvironment = "global"): Promise<AccountInfo> {
   setSelectedCloudEnvironment(cloudEnvironment);
   const authority = getAuthorityUrl(cloudEnvironment, "common");
