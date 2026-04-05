@@ -29,7 +29,15 @@ export default function RootLayout({
     <html
       lang="en"
       className={`dark ${instrumentSans.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("gep-theme");if(t==="light"||(!t&&window.matchMedia("(prefers-color-scheme: light)").matches)){document.documentElement.classList.remove("dark");document.documentElement.classList.add("light");document.documentElement.style.colorScheme="light"}}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body>
         <MsalProvider>
           <TRPCReactProvider>{children}</TRPCReactProvider>

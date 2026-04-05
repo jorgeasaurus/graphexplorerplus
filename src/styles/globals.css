@@ -43,9 +43,47 @@
   --color-info: #06b6d4;
 }
 
+/* ─── Light mode overrides ─── */
+html.light {
+  --color-bg-deep: #f0f2f5;
+  --color-bg-base: #f8f9fb;
+  --color-bg-surface: #ffffff;
+  --color-bg-elevated: #f3f4f6;
+  --color-bg-hover: #e9ebf0;
+
+  --color-border-subtle: #e2e5ea;
+  --color-border-default: #cdd2da;
+  --color-border-strong: #a8b0be;
+
+  --color-text-primary: #111827;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #6b7280;
+  --color-text-muted: #9ca3af;
+
+  --color-accent: #059980;
+  --color-accent-hover: #047a67;
+  --color-accent-muted: rgba(5, 153, 128, 0.12);
+  --color-accent-subtle: rgba(5, 153, 128, 0.06);
+
+  --color-method-get: #0891b2;
+  --color-method-post: #059669;
+  --color-method-put: #d97706;
+  --color-method-patch: #7c3aed;
+  --color-method-delete: #e11d48;
+
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-error: #e11d48;
+  --color-info: #0891b2;
+}
+
 /* Base styles */
 html {
   color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
 }
 
 body {
@@ -69,6 +107,18 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-strong);
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: var(--color-bg-elevated);
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
   background: var(--color-border-strong);
 }
 

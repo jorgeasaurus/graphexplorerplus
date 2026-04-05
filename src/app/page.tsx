@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { InteractionStatus } from "@azure/msal-browser";
 import { signIn, signOut } from "~/lib/auth/authUtils";
+import { ThemeToggle } from "~/components/theme-toggle";
 
 const features = [
   {
@@ -118,6 +119,7 @@ export default function Home() {
             <span className="hidden sm:inline">Graph Explorer<span className="text-accent">+</span></span>
           </Link>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             {isLoading ? (
               <span className="px-4 py-2 text-sm text-text-muted">Signing in…</span>
             ) : isAuth ? (

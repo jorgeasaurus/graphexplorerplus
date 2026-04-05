@@ -1,4 +1,6 @@
-const SYSTEM_PROMPT = `You are a Microsoft Graph API expert. Convert natural language requests into Graph API calls.
+function buildSystemPrompt(): string {
+  const today = new Date().toISOString().split("T")[0];
+  return `You are a Microsoft Graph API expert. Today's date is ${today}. Convert natural language requests into Graph API calls.
 
 Return ONLY valid JSON with this structure:
 {"method":"GET","url":"https://graph.microsoft.com/v1.0/...","body":null}
@@ -43,6 +45,7 @@ Filter examples:
 - OS filter: $filter=operatingSystem eq 'Windows'
 - Boolean: $filter=accountEnabled eq true
 - Compliance: $filter=complianceState eq 'noncompliant'`;
+}
 
 export interface NLQueryResult {
   method: string;
@@ -79,7 +82,7 @@ export async function naturalLanguageToQuery(prompt: string): Promise<NLQueryRes
     },
     body: JSON.stringify({
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: buildSystemPrompt() },
         { role: "user", content: prompt },
       ],
       temperature: 0.1,

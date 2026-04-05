@@ -5,6 +5,7 @@ import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { InteractionStatus } from "@azure/msal-browser";
 import { signIn, signOut, setSelectedCloudEnvironment, getSelectedCloudEnvironment } from "~/lib/auth/authUtils";
 import { type CloudEnvironment } from "~/lib/auth/msalConfig";
+import { ThemeToggle } from "~/components/theme-toggle";
 
 function getInitials(name: string | undefined): string {
   if (!name) return "?";
@@ -86,6 +87,9 @@ export function HeaderBar() {
 
       {/* Right: Settings + User */}
       <div className="flex items-center gap-3">
+        {/* Theme toggle */}
+        <ThemeToggle />
+
         {/* Settings dropdown */}
         <div className="relative" ref={menuRef}>
           <button
