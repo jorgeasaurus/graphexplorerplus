@@ -49,7 +49,7 @@ export const LOGO_SVG_STRING = `<svg width="32" height="32" viewBox="0 0 32 32" 
 export const BRAND = {
   name: "Graph Explorer+",
   accent: "#00d4aa",
-  accentLight: "#059980",
+  accentLight: "#047a67",
   surface: "#09090b",
   surfaceLight: "#fafafa",
   fontDisplay: "Instrument Sans",
