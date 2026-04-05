@@ -3,6 +3,8 @@
 import { useState, useCallback } from "react";
 import { CodeSnippets } from "./code-snippets";
 import { ConsentBanner } from "./consent-banner";
+import { CopyButton } from "~/components/copy-button";
+import { SkeletonBlock } from "~/components/skeleton";
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -451,12 +453,13 @@ export function ResponseViewer({
 
   if (response === null) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 py-16" role="status">
-        <svg aria-hidden="true" className="h-6 w-6 animate-spin text-accent" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" className="opacity-20" />
-          <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-        </svg>
-        <p className="text-xs text-text-muted">Loading…</p>
+      <div className="flex flex-1 flex-col" role="status" aria-label="Loading">
+        <div className="flex h-10 items-center gap-3 border-b border-border-subtle px-4">
+          <div className="skeleton h-5 w-16 rounded-full" />
+          <div className="skeleton h-4 w-12" />
+          <div className="skeleton h-4 w-14" />
+        </div>
+        <SkeletonBlock lines={8} />
       </div>
     );
   }
@@ -465,42 +468,15 @@ export function ResponseViewer({
 
   return (
     <div className="flex h-full flex-col">
-      {/* ── Status / Meta Bar ─────────────────────────────── */}
-      <div className="flex h-9 items-center gap-3 border-b border-border-subtle px-3">
-        {/* Status badge */}
-        <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 font-mono text-xs font-medium ${badge} ${text}`}
-        >
+      {/* Status / Meta Bar */}
+      <div className="flex h-10 items-center gap-3 border-b border-border-subtle px-4">
+        <span className={`inline-flex items-center rounded-full px-2.5 py-1 font-mono text-xs font-medium ${badge} ${text}`}>
           {response.status} {response.statusText}
         </span>
-
-        {/* Meta */}
-        <span className="font-mono text-xs tabular-nums text-text-secondary">
-          {response.timeMs}ms
-        </span>
-        <span className="font-mono text-xs tabular-nums text-text-secondary">
-          {formatBytes(response.sizeBytes)}
-        </span>
-
-        {/* Spacer */}
+        <span className="font-mono text-xs tabular-nums text-text-secondary">{response.timeMs}ms</span>
+        <span className="font-mono text-xs tabular-nums text-text-secondary">{formatBytes(response.sizeBytes)}</span>
         <div className="flex-1" />
-
-        {/* Actions */}
-        <button
-          onClick={handleCopy}
-          className="inline-flex h-6 w-6 items-center justify-center rounded text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary"
-          title="Copy response"
-          aria-label={copied ? "Copied" : "Copy response"}
-        >
-          {copied ? <CheckIcon /> : <ClipboardIcon />}
-        </button>
-        <button
-          className="inline-flex h-6 w-6 items-center justify-center rounded text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary"
-          title="Download response"
-          aria-label="Download response"
-        >
-          <DownloadIcon />
-        </button>
+        <CopyButton text={response.body} label="Copy response" />
       </div>
 
       {/* ── Consent Banner (403 errors) ───────────────────── */}
@@ -514,17 +490,17 @@ export function ResponseViewer({
         />
       )}
 
-      {/* ── Tab Bar ───────────────────────────────────────── */}
-      <div className="flex h-8 items-end gap-1 border-b border-border-subtle px-3">
+      {/* Tab Bar */}
+      <div className="flex h-10 items-end gap-0.5 border-b border-border-subtle px-2">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative px-2.5 pb-1.5 text-xs transition-colors ${
+              className={`relative flex h-9 items-center rounded-t-lg px-4 text-xs font-medium transition-colors ${
                 isActive
-                  ? "text-accent"
+                  ? "bg-bg-elevated text-accent"
                   : "text-text-tertiary hover:text-text-secondary"
               }`}
             >

@@ -94,7 +94,7 @@ function KVEditor({
           {/* Toggle */}
           <button
             onClick={() => update(row.id, { enabled: !row.enabled })}
-            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
               row.enabled
                 ? "border-accent bg-accent/20 text-accent"
                 : "border-border-default bg-bg-elevated text-transparent"
@@ -102,13 +102,7 @@ function KVEditor({
             aria-label={row.enabled ? "Disable" : "Enable"}
           >
             <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none">
-              <polyline
-                points="20 6 9 17 4 12"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <polyline points="20 6 9 17 4 12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
@@ -121,7 +115,7 @@ function KVEditor({
             aria-label="Header name"
             name="header-key"
             autoComplete="off"
-            className="h-7 flex-1 rounded border border-border-subtle bg-bg-elevated px-2 font-mono text-xs text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+            className="h-9 flex-1 rounded-lg border border-border-subtle bg-bg-elevated px-3 font-mono text-xs text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
           />
 
           {/* Value */}
@@ -133,13 +127,13 @@ function KVEditor({
             aria-label="Header value"
             name="header-value"
             autoComplete="off"
-            className="h-7 flex-1 rounded border border-border-subtle bg-bg-elevated px-2 font-mono text-xs text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+            className="h-9 flex-1 rounded-lg border border-border-subtle bg-bg-elevated px-3 font-mono text-xs text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
           />
 
           {/* Delete */}
           <button
             onClick={() => remove(row.id)}
-            className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-text-muted opacity-0 transition-all hover:bg-bg-hover hover:text-method-delete group-hover:opacity-100"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-text-muted opacity-0 transition-all hover:bg-bg-hover hover:text-method-delete group-hover:opacity-100"
             aria-label="Remove row"
           >
             <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none">
@@ -169,7 +163,7 @@ function KVEditor({
       {/* Add row */}
       <button
         onClick={addRow}
-        className="mx-3 mt-1 flex h-7 items-center gap-1.5 rounded border border-dashed border-border-subtle px-2 text-xs text-text-muted transition-colors hover:border-border-default hover:text-text-tertiary"
+        className="mx-3 mt-2 flex h-9 items-center gap-1.5 rounded-lg border border-dashed border-border-subtle px-3 text-xs text-text-muted transition-colors hover:border-border-default hover:text-text-tertiary"
       >
         <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none">
           <line
@@ -532,8 +526,8 @@ export default function QueryBuilder({
 
   return (
     <div className="flex min-w-0 flex-col overflow-hidden">
-      {/* ── URL Bar Row ─────────────────────────────────────────── */}
-      <div className="flex min-h-[42px] flex-wrap items-center gap-1.5 border-b border-border-subtle px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-0">
+      {/* URL Bar Row */}
+      <div className="flex min-h-[48px] flex-wrap items-center gap-2 border-b border-border-subtle px-3 py-2 sm:px-4">
         {/* Method dropdown */}
         <div className="relative">
           <button
@@ -541,37 +535,18 @@ export default function QueryBuilder({
             aria-haspopup="listbox"
             aria-expanded={dropdownOpen}
             aria-label={`HTTP method: ${method}`}
-            className={`flex h-[30px] items-center gap-1.5 rounded px-2.5 font-mono text-xs font-bold tracking-wide transition-colors ${style.text} ${style.bg} hover:brightness-125`}
+            className={`flex h-9 items-center gap-1.5 rounded-lg px-3 font-mono text-xs font-bold tracking-wide transition-colors ${style.text} ${style.bg} hover:brightness-125`}
           >
             {method}
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-              className={`transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
-            >
-              <polyline
-                points="6 9 12 15 18 9"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true" className={`transition-transform ${dropdownOpen ? "rotate-180" : ""}`}>
+              <polyline points="6 9 12 15 18 9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
           {dropdownOpen && (
             <>
-              {/* Backdrop */}
-              <div
-                className="fixed inset-0 z-10"
-                role="presentation"
-                onClick={() => setDropdownOpen(false)}
-              />
-              {/* Menu */}
-              <div role="listbox" aria-label="HTTP methods" className="absolute left-0 top-full z-20 mt-1 w-28 overflow-hidden rounded border border-border-default bg-bg-surface shadow-xl shadow-black/40">
+              <div className="fixed inset-0 z-10" role="presentation" onClick={() => setDropdownOpen(false)} />
+              <div role="listbox" aria-label="HTTP methods" className="absolute left-0 top-full z-20 mt-1.5 w-28 overflow-hidden rounded-xl border border-border-default bg-bg-elevated p-1 shadow-2xl">
                 {METHODS.map((m) => {
                   const s = METHOD_STYLES[m];
                   return (
@@ -580,9 +555,7 @@ export default function QueryBuilder({
                       role="option"
                       aria-selected={m === method}
                       onClick={() => handleMethodChange(m)}
-                      className={`flex w-full items-center px-3 py-1.5 font-mono text-xs font-bold tracking-wide transition-colors hover:bg-bg-hover ${s.text} ${
-                        m === method ? s.bg : ""
-                      }`}
+                      className={`flex h-9 w-full items-center rounded-lg px-3 font-mono text-xs font-bold tracking-wide transition-colors hover:bg-bg-hover ${s.text} ${m === method ? s.bg : ""}`}
                     >
                       {m}
                     </button>
@@ -593,13 +566,13 @@ export default function QueryBuilder({
           )}
         </div>
 
-        {/* Version toggle — hidden on very small screens */}
-        <div className="hidden h-7 items-center overflow-hidden rounded-md border border-border-default sm:flex">
+        {/* Version toggle */}
+        <div className="hidden h-9 items-center overflow-hidden rounded-lg border border-border-default sm:flex">
           {(["v1.0", "beta"] as const).map((v) => (
             <button
               key={v}
               onClick={() => handleVersionChange(v)}
-              className={`h-7 px-2 text-xs font-medium transition-colors ${
+              className={`h-9 px-3 text-xs font-medium transition-colors ${
                 apiVersion === v
                   ? "bg-accent-muted text-accent"
                   : "bg-bg-elevated text-text-tertiary hover:text-text-secondary"
@@ -610,7 +583,7 @@ export default function QueryBuilder({
           ))}
         </div>
 
-        {/* URL Input with autocomplete */}
+        {/* URL Input */}
         <div className="relative order-last min-w-0 flex-[1_1_100%] sm:order-none sm:flex-1">
           <input
             ref={urlInputRef}
@@ -619,12 +592,19 @@ export default function QueryBuilder({
             onChange={(e) => handleUrlChange(e.target.value)}
             onFocus={handleUrlFocus}
             onKeyDown={handleUrlKeyDown}
+            onPaste={(e) => {
+              const pasted = e.clipboardData.getData("text").trim();
+              if (pasted.startsWith("http")) {
+                e.preventDefault();
+                handleUrlChange(pasted);
+              }
+            }}
             placeholder={`${graphBase}/v1.0/`}
             aria-label="Request URL"
             spellCheck={false}
             autoComplete="off"
             name="url"
-            className="h-[30px] w-full rounded border border-border-default bg-bg-elevated px-3 font-mono text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50"
+            className="h-9 w-full rounded-lg border border-border-default bg-bg-elevated px-3 font-mono text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50"
             role="combobox"
             aria-expanded={showSuggestions}
             aria-autocomplete="list"
@@ -636,49 +616,34 @@ export default function QueryBuilder({
             }
           />
 
-          {/* Autocomplete dropdown */}
           {showSuggestions && suggestions.length > 0 && (
             <div
               ref={suggestionsRef}
               id={`${uid}-suggestions`}
               role="listbox"
-              className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[300px] overflow-y-auto rounded-lg border border-border-default bg-bg-elevated shadow-lg shadow-black/40"
+              className="absolute left-0 right-0 top-full z-30 mt-1.5 max-h-[300px] overflow-y-auto rounded-xl border border-border-default bg-bg-elevated p-1 shadow-2xl"
             >
               {suggestions.map((ep, idx) => {
-                const epStyle = METHOD_STYLES[ep.m as HttpMethod] ?? {
-                  text: "text-text-muted",
-                  bg: "bg-bg-hover",
-                };
+                const epStyle = METHOD_STYLES[ep.m as HttpMethod] ?? { text: "text-text-muted", bg: "bg-bg-hover" };
                 return (
                   <button
                     key={`${ep.m}-${ep.p}`}
                     id={`${uid}-suggestion-${idx}`}
                     role="option"
                     aria-selected={idx === selectedSuggestionIndex}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      selectSuggestion(ep);
-                    }}
-                    className={`flex w-full cursor-pointer flex-col gap-0.5 px-3 py-2 text-left transition-colors ${
-                      idx === selectedSuggestionIndex
-                        ? "bg-bg-hover"
-                        : "hover:bg-bg-hover"
+                    onMouseDown={(e) => { e.preventDefault(); selectSuggestion(ep); }}
+                    className={`flex w-full cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2 text-left transition-colors ${
+                      idx === selectedSuggestionIndex ? "bg-bg-hover" : "hover:bg-bg-hover"
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <span
-                        className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px] font-bold leading-none ${epStyle.text} ${epStyle.bg}`}
-                      >
+                      <span className={`shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-bold leading-none ${epStyle.text} ${epStyle.bg}`}>
                         {ep.m}
                       </span>
-                      <span className="truncate font-mono text-xs text-text-primary">
-                        {ep.p}
-                      </span>
+                      <span className="truncate font-mono text-xs text-text-primary">{ep.p}</span>
                     </div>
                     {ep.s && (
-                      <span className="truncate pl-[calc(1.5rem+0.5rem)] font-sans text-[11px] text-text-muted">
-                        {ep.s}
-                      </span>
+                      <span className="truncate pl-[calc(1.5rem+0.5rem)] font-sans text-[11px] text-text-muted">{ep.s}</span>
                     )}
                   </button>
                 );
@@ -691,39 +656,33 @@ export default function QueryBuilder({
         <button
           onClick={() => void handleSend()}
           disabled={isLoading}
-          className="flex h-[30px] items-center gap-1.5 rounded bg-accent px-3 font-sans text-xs font-semibold text-bg-deep transition-colors hover:bg-accent-hover disabled:opacity-70 sm:px-5"
+          className="flex h-9 items-center gap-2 rounded-lg bg-accent px-4 font-sans text-xs font-semibold text-bg-deep transition-colors hover:bg-accent-hover disabled:opacity-70 sm:px-6"
         >
           {isLoading ? (
             <Spinner />
           ) : (
-            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M5 12h14M13 5l7 7-7 7"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           )}
           {authWarning ? "Sign in first" : "Send"}
         </button>
       </div>
 
-      {/* ── Permission Inspector ───────────────────────────────── */}
+      {/* Permission Inspector */}
       <PermissionInspector method={method} url={url} />
 
-      {/* ── Tab Bar ─────────────────────────────────────────────── */}
-      <div className="flex h-9 items-end border-b border-border-subtle bg-bg-surface">
+      {/* Tab Bar */}
+      <div className="flex h-10 items-end gap-0.5 border-b border-border-subtle bg-bg-surface px-2">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative flex h-full items-center px-4 text-xs font-medium transition-colors ${
+              className={`relative flex h-9 items-center rounded-t-lg px-4 text-xs font-medium transition-colors ${
                 isActive
-                  ? "text-accent"
+                  ? "bg-bg-elevated text-accent"
                   : "text-text-tertiary hover:text-text-secondary"
               }`}
             >
@@ -736,30 +695,15 @@ export default function QueryBuilder({
         })}
       </div>
 
-      {/* ── Tab Content ─────────────────────────────────────────── */}
+      {/* Tab Content */}
       <div className="flex-1">
         {activeTab === "headers" && (
-          <KVEditor
-            rows={headers}
-            onChange={setHeaders}
-            keyPlaceholder="Header"
-            valuePlaceholder="Value"
-          />
+          <KVEditor rows={headers} onChange={setHeaders} keyPlaceholder="Header" valuePlaceholder="Value" />
         )}
-
-        {activeTab === "body" && (
-          <BodyEditor value={body} onChange={setBody} />
-        )}
-
+        {activeTab === "body" && <BodyEditor value={body} onChange={setBody} />}
         {activeTab === "params" && (
-          <KVEditor
-            rows={params}
-            onChange={setParams}
-            keyPlaceholder="Parameter"
-            valuePlaceholder="Value"
-          />
+          <KVEditor rows={params} onChange={setParams} keyPlaceholder="Parameter" valuePlaceholder="Value" />
         )}
-
         {activeTab === "auth" && <AuthTab authenticated={authenticated} />}
       </div>
     </div>

@@ -62,7 +62,7 @@ export default function ExplorerPage() {
 
       {/* Request Panel */}
       <div
-        className="flex min-w-0 flex-col overflow-hidden rounded-t-lg border border-border-default bg-bg-surface"
+        className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border-default bg-bg-surface"
         style={{ flexBasis: `${topBasis}%` }}
       >
         <QueryBuilder onResponse={setResponse} onRequest={setRequest} sendRef={sendRef} />
@@ -82,15 +82,15 @@ export default function ExplorerPage() {
             setTopBasis((prev) => Math.min(Math.max(prev + delta, 15), 85));
           }
         }}
-        className="group relative z-10 flex h-2 shrink-0 cursor-row-resize items-center justify-center"
+        className="group relative z-10 flex h-3 shrink-0 cursor-row-resize items-center justify-center"
       >
-        <div className="h-px w-full bg-border-subtle transition-colors group-hover:bg-accent" />
-        <div className="absolute h-1 w-10 rounded-full bg-border-default transition-colors group-hover:bg-accent" />
+        <div className="h-px w-full bg-transparent transition-colors group-hover:bg-accent/30" />
+        <div className="absolute h-1 w-8 rounded-full bg-border-default transition-colors group-hover:bg-accent" />
       </div>
 
       {/* Response Panel */}
       <div
-        className="flex min-w-0 flex-col overflow-hidden rounded-b-lg border border-border-default bg-bg-surface"
+        className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border-default bg-bg-surface"
         style={{ flexBasis: `${100 - topBasis}%` }}
       >
         <ResponseViewer response={response} request={request} onRetry={handleRetry} />

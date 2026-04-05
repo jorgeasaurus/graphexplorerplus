@@ -5,6 +5,7 @@ import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { InteractionStatus } from "@azure/msal-browser";
 import { signIn, signOut } from "~/lib/auth/authUtils";
 import { ThemeToggle } from "~/components/theme-toggle";
+import { Logo } from "~/components/logo";
 
 const features = [
   {
@@ -112,10 +113,8 @@ export default function Home() {
       {/* ── Nav ── */}
       <nav className="animate-fade-in sticky top-0 z-50 border-b border-border-subtle bg-bg-deep/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2 font-mono text-sm font-semibold tracking-wide text-text-primary">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-accent text-xs font-bold text-bg-deep">
-              G+
-            </span>
+          <Link href="/" className="flex items-center gap-2.5 font-sans text-sm font-bold tracking-tight text-text-primary">
+            <Logo size={28} className="text-accent" />
             <span className="hidden sm:inline">Graph Explorer<span className="text-accent">+</span></span>
           </Link>
           <div className="flex items-center gap-3">

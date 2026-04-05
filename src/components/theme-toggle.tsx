@@ -14,7 +14,7 @@ export function ThemeToggle() {
     setMounted(true);
   }, []);
 
-  if (!mounted) return <div className="h-7 w-7" />;
+  if (!mounted) return <div className="h-9 w-9" />;
 
   const handleToggle = () => {
     const next = toggleTheme();
@@ -24,7 +24,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={handleToggle}
-      className="flex h-7 w-7 items-center justify-center rounded text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-secondary focus-visible:ring-1 focus-visible:ring-accent"
+      className="flex h-9 w-9 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-secondary focus-visible:ring-1 focus-visible:ring-accent"
       aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
       title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
     >
