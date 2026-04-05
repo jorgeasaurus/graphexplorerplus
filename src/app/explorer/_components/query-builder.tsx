@@ -335,9 +335,13 @@ export default function QueryBuilder({
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const { method: m, url: u } = (e as CustomEvent).detail;
-      setMethod(m as HttpMethod);
-      setUrl(u as string);
+      const detail = (e as CustomEvent).detail as { method: string; url: string; body?: string };
+      setMethod(detail.method as HttpMethod);
+      setUrl(detail.url);
+      if (detail.body) {
+        setBody(detail.body);
+        setActiveTab("body");
+      }
     };
     window.addEventListener("select-query", handler);
     return () => window.removeEventListener("select-query", handler);
