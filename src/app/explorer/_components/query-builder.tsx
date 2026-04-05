@@ -13,10 +13,12 @@ import {
   type EndpointEntry,
 } from "~/lib/data/endpoints";
 import { PermissionInspector } from "./permission-inspector";
+import { ModifyPermissions } from "./modify-permissions";
+import { AccessTokenViewer } from "./access-token-viewer";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 type ApiVersion = "v1.0" | "beta";
-type Tab = "headers" | "body" | "params" | "auth";
+type Tab = "headers" | "body" | "params" | "auth" | "permissions" | "token";
 
 interface HeaderRow {
   id: string;
@@ -37,10 +39,10 @@ const METHODS: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 const BODY_METHODS: HttpMethod[] = ["POST", "PUT", "PATCH"];
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "headers", label: "Headers" },
-  { id: "body", label: "Body" },
-  { id: "params", label: "Query Params" },
-  { id: "auth", label: "Auth" },
+  { id: "body", label: "Request Body" },
+  { id: "headers", label: "Request Headers" },
+  { id: "permissions", label: "Modify Permissions" },
+  { id: "token", label: "Access Token" },
 ];
 
 function makeId() {
@@ -306,7 +308,7 @@ export default function QueryBuilder({
   const [method, setMethod] = useState<HttpMethod>("GET");
   const [url, setUrl] = useState(`${graphBase}/v1.0/me`);
   const [apiVersion, setApiVersion] = useState<ApiVersion>("v1.0");
-  const [activeTab, setActiveTab] = useState<Tab>("headers");
+  const [activeTab, setActiveTab] = useState<Tab>("body");
   const [headers, setHeaders] = useState<HeaderRow[]>([
     { id: makeId(), key: "Content-Type", value: "application/json", enabled: true },
   ]);
@@ -696,7 +698,7 @@ export default function QueryBuilder({
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1">
+      <div className="flex flex-1 overflow-hidden">
         {activeTab === "headers" && (
           <KVEditor rows={headers} onChange={setHeaders} keyPlaceholder="Header" valuePlaceholder="Value" />
         )}
@@ -705,6 +707,8 @@ export default function QueryBuilder({
           <KVEditor rows={params} onChange={setParams} keyPlaceholder="Parameter" valuePlaceholder="Value" />
         )}
         {activeTab === "auth" && <AuthTab authenticated={authenticated} />}
+        {activeTab === "permissions" && <ModifyPermissions method={method} url={url} />}
+        {activeTab === "token" && <AccessTokenViewer />}
       </div>
     </div>
   );
