@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { CodeSnippets } from "./code-snippets";
 import { ConsentBanner } from "./consent-banner";
 import { CopyButton } from "~/components/copy-button";
 import { SkeletonBlock } from "~/components/skeleton";
+import { createPortal } from "react-dom";
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -441,6 +442,15 @@ export function ResponseViewer({
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("body");
   const [copied, setCopied] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  // Close fullscreen on Escape key
+  useEffect(() => {
+    if (!expanded) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setExpanded(false); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [expanded]);
 
   const handleCopy = useCallback(async () => {
     if (!response) return;
@@ -476,6 +486,15 @@ export function ResponseViewer({
         <span className="font-mono text-xs tabular-nums text-text-secondary">{response.timeMs}ms</span>
         <span className="font-mono text-xs tabular-nums text-text-secondary">{formatBytes(response.sizeBytes)}</span>
         <div className="flex-1" />
+        <button
+          onClick={() => setExpanded(true)}
+          title="Expand response fullscreen"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
+          </svg>
+        </button>
         <CopyButton text={response.body} label="Copy response" />
       </div>
 
@@ -529,6 +548,38 @@ export function ResponseViewer({
           />
         )}
       </div>
+
+      {/* Fullscreen modal */}
+      {expanded && typeof document !== "undefined" && createPortal(
+        <div
+          className="fixed inset-0 z-50 flex flex-col bg-bg-deep/95 backdrop-blur-sm"
+          role="dialog"
+          aria-label="Response fullscreen view"
+        >
+          <div className="flex h-12 items-center gap-3 border-b border-border-subtle px-4">
+            <span className={`inline-flex items-center rounded-full px-2.5 py-1 font-mono text-xs font-medium ${badge} ${text}`}>
+              {response.status} {response.statusText}
+            </span>
+            <span className="font-mono text-xs tabular-nums text-text-secondary">{response.timeMs}ms</span>
+            <span className="font-mono text-xs tabular-nums text-text-secondary">{formatBytes(response.sizeBytes)}</span>
+            <div className="flex-1" />
+            <CopyButton text={response.body} label="Copy response" />
+            <button
+              onClick={() => setExpanded(false)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary"
+              aria-label="Close fullscreen"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 font-mono text-xs">
+            <BodyTab body={response.body} />
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

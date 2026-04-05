@@ -319,6 +319,7 @@ export default function QueryBuilder({
   const [isLoading, setIsLoading] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [authWarning, setAuthWarning] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const authenticated = useIsAuthenticated();
 
   // Autocomplete state
@@ -341,6 +342,22 @@ export default function QueryBuilder({
     };
     window.addEventListener("select-query", handler);
     return () => window.removeEventListener("select-query", handler);
+  }, []);
+
+  // Hydrate from shared URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const m = params.get("m");
+    const u = params.get("u");
+    const v = params.get("v");
+    const b = params.get("b");
+    if (m && METHODS.includes(m as HttpMethod)) setMethod(m as HttpMethod);
+    if (u) setUrl(u);
+    if (v && (v === "v1.0" || v === "beta")) setApiVersion(v);
+    if (b) { setBody(b); setActiveTab("body"); }
+    if (m || u) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }, []);
 
   const extractPath = useCallback((fullUrl: string) => {
@@ -653,6 +670,28 @@ export default function QueryBuilder({
             </div>
           )}
         </div>
+
+        {/* Share + Copy URL buttons */}
+        <button
+          onClick={() => {
+            const shareUrl = new URL(window.location.href);
+            shareUrl.searchParams.set("m", method);
+            shareUrl.searchParams.set("u", url);
+            shareUrl.searchParams.set("v", apiVersion);
+            if (body && BODY_METHODS.includes(method)) shareUrl.searchParams.set("b", body);
+            void navigator.clipboard.writeText(shareUrl.toString());
+            setShareCopied(true);
+            setTimeout(() => setShareCopied(false), 1500);
+          }}
+          title="Copy shareable link"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary"
+        >
+          {shareCopied ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-success"><path d="M20 6L9 17l-5-5"/></svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          )}
+        </button>
 
         {/* Send button */}
         <button

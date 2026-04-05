@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { HistoryPanel } from "./history-panel";
+import { ResourceExplorer } from "./resource-explorer";
 import { SampleQueries } from "./sample-queries";
 
-type TabId = "history" | "samples";
+type TabId = "history" | "samples" | "resources";
 
 export function Sidebar() {
   const [activeTab, setActiveTab] = useState<TabId>("samples");
@@ -41,6 +42,7 @@ export function Sidebar() {
         {(
           [
             { id: "samples" as const, label: "Samples" },
+            { id: "resources" as const, label: "Resources" },
             { id: "history" as const, label: "History" },
           ] as const
         ).map((tab) => (
@@ -71,6 +73,7 @@ export function Sidebar() {
       <div className="flex-1 overflow-y-auto">
         {activeTab === "history" && <HistoryPanel />}
         {activeTab === "samples" && <SampleQueries />}
+        {activeTab === "resources" && <ResourceExplorer />}
       </div>
     </aside>
   );

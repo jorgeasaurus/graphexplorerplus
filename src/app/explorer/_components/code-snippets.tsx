@@ -11,7 +11,7 @@ interface CodeSnippetsProps {
   body?: string;
 }
 
-type Language = "javascript" | "csharp" | "python" | "powershell" | "go" | "curl";
+type Language = "javascript" | "csharp" | "python" | "powershell" | "go" | "java" | "php" | "curl";
 
 const LANGUAGES: { id: Language; label: string }[] = [
   { id: "powershell", label: "PowerShell" },
@@ -19,8 +19,21 @@ const LANGUAGES: { id: Language; label: string }[] = [
   { id: "csharp", label: "C#" },
   { id: "python", label: "Python" },
   { id: "go", label: "Go" },
+  { id: "java", label: "Java" },
+  { id: "php", label: "PHP" },
   { id: "curl", label: "cURL" },
 ];
+
+const SDK_LINKS: Record<Language, { sdk: string; docs: string } | null> = {
+  javascript: { sdk: "https://www.npmjs.com/package/@microsoft/microsoft-graph-client", docs: "https://learn.microsoft.com/en-us/graph/sdks/sdk-installation#install-the-microsoft-graph-javascript-sdk" },
+  csharp: { sdk: "https://www.nuget.org/packages/Microsoft.Graph", docs: "https://aka.ms/csharpsdk" },
+  python: { sdk: "https://pypi.org/project/msgraph-sdk/", docs: "https://learn.microsoft.com/en-us/graph/sdks/sdk-installation#install-the-microsoft-graph-python-sdk" },
+  powershell: { sdk: "https://www.powershellgallery.com/packages/Microsoft.Graph", docs: "https://aka.ms/pshellsdk" },
+  go: { sdk: "https://github.com/microsoftgraph/msgraph-sdk-go", docs: "https://aka.ms/graphgosdk" },
+  java: { sdk: "https://github.com/microsoftgraph/msgraph-sdk-java", docs: "https://learn.microsoft.com/en-us/graph/sdks/sdk-installation#install-the-microsoft-graph-java-sdk" },
+  php: { sdk: "https://github.com/microsoftgraph/msgraph-sdk-php", docs: "https://learn.microsoft.com/en-us/graph/sdks/sdk-installation#install-the-microsoft-graph-php-sdk" },
+  curl: null,
+};
 
 // ── Snippet Generators ─────────────────────────────────────
 
@@ -256,6 +269,74 @@ ${bodySetup}
 }`;
 }
 
+function generateJava(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
+  const { path } = extractApiPath(url);
+  const methodUpper = method.toUpperCase();
+
+  const bodyBlock = body
+    ? `\nString requestBody = "${body.replace(/"/g, '\\"').replace(/\n/g, "\\n")}";\n`
+    : "";
+
+  const bodyArg = body ? ", requestBody" : "";
+
+  return `import com.azure.identity.DeviceCodeCredentialBuilder;
+import com.microsoft.graph.serviceclient.GraphServiceClient;
+import com.microsoft.kiota.RequestInformation;
+import com.microsoft.kiota.HttpMethod;
+
+DeviceCodeCredential credential = new DeviceCodeCredentialBuilder()
+    .tenantId("{tenant-id}")
+    .clientId("{client-id}")
+    .build();
+
+String[] scopes = new String[]{"https://graph.microsoft.com/.default"};
+GraphServiceClient graphClient = new GraphServiceClient(credential, scopes);
+${bodyBlock}
+RequestInformation requestInfo = new RequestInformation();
+requestInfo.httpMethod = HttpMethod.${methodUpper};
+requestInfo.urlTemplate = "{+baseurl}${path}";
+
+var result = graphClient.getRequestAdapter()
+    .sendPrimitive(requestInfo, null, String.class${bodyArg});
+
+System.out.println(result);`;
+}
+
+function generatePhp(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
+  const { path } = extractApiPath(url);
+  const methodLower = method.toLowerCase();
+
+  const bodyBlock = body
+    ? `\n$body = json_decode('${body.replace(/'/g, "\\'")}', true);\n`
+    : "";
+
+  const bodyArg = body ? ", $body" : "";
+
+  return `<?php
+use Microsoft\\Graph\\GraphServiceClient;
+use Microsoft\\Kiota\\Authentication\\Php\\PhpLeagueAuthenticationProvider;
+
+$tokenRequestContext = new \\Microsoft\\Kiota\\Authentication\\Php\\PhpLeagueAccessTokenProvider(
+    '{tenant-id}',
+    '{client-id}',
+    '{client-secret}',
+    ['https://graph.microsoft.com/.default']
+);
+
+$authProvider = new PhpLeagueAuthenticationProvider($tokenRequestContext);
+$graphClient = new GraphServiceClient($authProvider);
+${bodyBlock}
+$requestInfo = new \\Microsoft\\Kiota\\Abstractions\\RequestInformation();
+$requestInfo->httpMethod = \\Microsoft\\Kiota\\Abstractions\\HttpMethod::${methodLower.charAt(0).toUpperCase() + methodLower.slice(1)}();
+$requestInfo->urlTemplate = '{+baseurl}${path}';
+
+$result = $graphClient->getRequestAdapter()
+    ->sendPrimitiveAsync($requestInfo, 'string'${bodyArg})
+    ->wait();
+
+echo $result;`;
+}
+
 function generateCurl(method: string, url: string, headers?: Record<string, string>, body?: string): string {
   const customHeaders = Object.entries(headers ?? {})
     .filter(([k]) => k.toLowerCase() !== "content-type")
@@ -275,6 +356,8 @@ const GENERATORS: Record<Language, (m: string, u: string, h?: Record<string, str
   python: generatePython,
   powershell: generatePowerShell,
   go: generateGo,
+  java: generateJava,
+  php: generatePhp,
   curl: generateCurl,
 };
 
@@ -286,6 +369,8 @@ const KEYWORD_PATTERNS: Record<Language, RegExp> = {
   python: /\b(import|from|def|class|return|if|else|elif|try|except|raise|with|as|print|None|True|False|await)\b/g,
   powershell: /(\$\w+|\b(\w+-Mg\w+|Connect-MgGraph|Invoke-MgGraphRequest|ConvertTo-Json|ConvertFrom-Json|Install-Module)\b|-Uri\b|-Method\b|-Body\b|-ContentType\b|-Depth\b|-Scopes\b|-Scope\b)/g,
   go: /\b(package|import|func|var|defer|nil|string|main|context)\b/g,
+  java: /\b(import|new|var|public|private|static|void|String|class|return|if|else|try|catch|throw|final)\b/g,
+  php: /\b(use|new|echo|function|return|if|else|try|catch|throw|class|public|private|null)\b/g,
   curl: /\b(curl)\b/g,
 };
 
@@ -295,6 +380,8 @@ const METHOD_CALL_PATTERNS: Record<Language, RegExp> = {
   python: /\b(GraphServiceClient|DeviceCodeCredential|GraphClientFactory|request_adapter|send_primitive_async|create_request_information|decode)\b/g,
   powershell: /(?:^|\s)(@\{|@')/g,
   go: /\b(azidentity\.NewDeviceCodeCredential|msgraphsdk\.NewGraphServiceClientWithCredentials|abstractions\.NewRequestInformation|RequestAdapter|SendPrimitive|fmt\.Println|strings\.NewReader)\b/g,
+  java: /\b(GraphServiceClient|DeviceCodeCredential|DeviceCodeCredentialBuilder|RequestInformation|HttpMethod|getRequestAdapter|sendPrimitive|System\.out\.println)\b/g,
+  php: /\b(GraphServiceClient|PhpLeagueAuthenticationProvider|PhpLeagueAccessTokenProvider|RequestInformation|HttpMethod|getRequestAdapter|sendPrimitiveAsync|json_decode)\b/g,
   curl: /(-X|-H|-d)\b/g,
 };
 
@@ -456,6 +543,30 @@ export function CodeSnippets({ method, url, headers, body }: CodeSnippetsProps) 
 
         {/* Spacer */}
         <div className="flex-1" />
+
+        {/* SDK links */}
+        {SDK_LINKS[activeLanguage] && (
+          <div className="mb-1 flex items-center gap-2">
+            <a
+              href={SDK_LINKS[activeLanguage]!.sdk}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-6 items-center gap-1 rounded px-1.5 text-[10px] text-text-tertiary transition-colors hover:bg-bg-hover hover:text-accent"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              SDK
+            </a>
+            <a
+              href={SDK_LINKS[activeLanguage]!.docs}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-6 items-center gap-1 rounded px-1.5 text-[10px] text-text-tertiary transition-colors hover:bg-bg-hover hover:text-accent"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+              Docs
+            </a>
+          </div>
+        )}
 
         {/* Copy button */}
         <button
