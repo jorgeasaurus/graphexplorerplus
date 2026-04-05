@@ -99,22 +99,11 @@ export function NLQueryBar({ onQueryGenerated }: NLQueryBarProps) {
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [placeholder, setPlaceholder] = useState("");
+  const [placeholder] = useState("Describe what you want from Graph API");
   const [showExamples, setShowExamples] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const configured = isAIConfigured();
-
-  // Rotating placeholder examples
-  useEffect(() => {
-    let idx = Math.floor(Math.random() * EXAMPLES.length);
-    setPlaceholder(EXAMPLES[idx]!);
-    const interval = setInterval(() => {
-      idx = (idx + 1) % EXAMPLES.length;
-      setPlaceholder(EXAMPLES[idx]!);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
