@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { HistoryPanel } from "./history-panel";
+import { SampleQueries } from "./sample-queries";
 
 const tabs = [
   {
@@ -137,11 +138,7 @@ export function Sidebar() {
       {!collapsed && (
         <div className="flex-1 overflow-y-auto">
           {activeTab === "history" && <HistoryPanel />}
-          {activeTab === "collections" && (
-            <div className="flex flex-col items-center justify-center p-3 py-12 text-center">
-              <p className="text-xs text-text-muted">Saved collections will appear here</p>
-            </div>
-          )}
+          {activeTab === "collections" && <SampleQueries />}
           {activeTab === "schema" && (
             <div className="flex flex-col items-center justify-center p-3 py-12 text-center">
               <p className="text-xs text-text-muted">Graph schema browser will appear here</p>

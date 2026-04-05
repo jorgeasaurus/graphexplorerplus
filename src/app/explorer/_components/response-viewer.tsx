@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { CodeSnippets } from "./code-snippets";
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -13,12 +14,20 @@ interface ResponseData {
   headers: Record<string, string>;
 }
 
-type TabId = "body" | "headers" | "preview";
+interface RequestInfo {
+  method: string;
+  url: string;
+  headers?: Record<string, string>;
+  body?: string;
+}
+
+type TabId = "body" | "headers" | "preview" | "snippets";
 
 const TABS = [
   { id: "body" as const, label: "Body" },
   { id: "headers" as const, label: "Headers" },
   { id: "preview" as const, label: "Preview" },
+  { id: "snippets" as const, label: "Code Snippets" },
 ];
 
 // ── JSON Syntax Highlighting ───────────────────────────────
@@ -350,8 +359,10 @@ function PreviewTab() {
 
 export function ResponseViewer({
   response,
+  request,
 }: {
   response?: ResponseData | null;
+  request?: RequestInfo;
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("body");
   const [copied, setCopied] = useState(false);
@@ -447,6 +458,14 @@ export function ResponseViewer({
           <HeadersTab headers={response.headers} />
         )}
         {activeTab === "preview" && <PreviewTab />}
+        {activeTab === "snippets" && request && (
+          <CodeSnippets
+            method={request.method}
+            url={request.url}
+            headers={request.headers}
+            body={request.body}
+          />
+        )}
       </div>
     </div>
   );

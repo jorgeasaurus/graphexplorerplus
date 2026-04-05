@@ -1,11 +1,18 @@
 "use client";
 
-import { useState, useCallback, useId } from "react";
+import { useState, useCallback, useId, useRef, useEffect } from "react";
 import { useIsAuthenticated } from "@azure/msal-react";
 import { createGraphClient } from "~/lib/graph/client";
 import type { GraphResponse } from "~/lib/graph/client";
+import {
+  loadEndpoints,
+  searchEndpoints,
+  type EndpointEntry,
+} from "~/lib/data/endpoints";
+import { PermissionInspector } from "./permission-inspector";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+type ApiVersion = "v1.0" | "beta";
 type Tab = "headers" | "body" | "params" | "auth";
 
 interface HeaderRow {
@@ -281,13 +288,16 @@ function Spinner() {
 
 export default function QueryBuilder({
   onResponse,
+  onRequest,
 }: {
   onResponse?: (response: GraphResponse | null) => void;
+  onRequest?: (request: { method: string; url: string; headers?: Record<string, string>; body?: string }) => void;
 }) {
   const uid = useId();
 
   const [method, setMethod] = useState<HttpMethod>("GET");
   const [url, setUrl] = useState("https://graph.microsoft.com/v1.0/me");
+  const [apiVersion, setApiVersion] = useState<ApiVersion>("v1.0");
   const [activeTab, setActiveTab] = useState<Tab>("headers");
   const [headers, setHeaders] = useState<HeaderRow[]>([
     { id: makeId(), key: "Content-Type", value: "application/json", enabled: true },
@@ -300,6 +310,145 @@ export default function QueryBuilder({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [authWarning, setAuthWarning] = useState(false);
   const authenticated = useIsAuthenticated();
+
+  // Autocomplete state
+  const [suggestions, setSuggestions] = useState<EndpointEntry[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  const endpointsRef = useRef<EndpointEntry[]>([]);
+  const urlInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { method: m, url: u } = (e as CustomEvent).detail;
+      setMethod(m as HttpMethod);
+      setUrl(u as string);
+    };
+    window.addEventListener("select-query", handler);
+    return () => window.removeEventListener("select-query", handler);
+  }, []);
+
+  const extractPath = useCallback((fullUrl: string) => {
+    const match = fullUrl.match(
+      /^https?:\/\/graph\.microsoft\.com\/(v1\.0|beta)(\/.*)?$/,
+    );
+    if (match) return match[2] ?? "";
+    const afterBase = fullUrl.replace(
+      /^https?:\/\/graph\.microsoft\.com\/?/,
+      "",
+    );
+    return afterBase.replace(/^(v1\.0|beta)\/?/, "");
+  }, []);
+
+  const updateSuggestions = useCallback(
+    (currentUrl: string) => {
+      const path = extractPath(currentUrl);
+      if (!path || path === "/") {
+        setSuggestions([]);
+        setShowSuggestions(false);
+        return;
+      }
+      const results = searchEndpoints(endpointsRef.current, path);
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0);
+      setSelectedSuggestionIndex(-1);
+    },
+    [extractPath],
+  );
+
+  const handleUrlChange = useCallback(
+    (newUrl: string) => {
+      setUrl(newUrl);
+      updateSuggestions(newUrl);
+    },
+    [updateSuggestions],
+  );
+
+  const handleUrlFocus = useCallback(() => {
+    if (endpointsRef.current.length === 0) {
+      void loadEndpoints().then((data) => {
+        endpointsRef.current = data.endpoints;
+        updateSuggestions(url);
+      });
+    } else {
+      updateSuggestions(url);
+    }
+  }, [url, updateSuggestions]);
+
+  const selectSuggestion = useCallback(
+    (ep: EndpointEntry) => {
+      const path = ep.p.replace(/^\//, "");
+      const newUrl = `https://graph.microsoft.com/${apiVersion}/${path}`;
+      setUrl(newUrl);
+      setShowSuggestions(false);
+      setSuggestions([]);
+      setSelectedSuggestionIndex(-1);
+    },
+    [apiVersion],
+  );
+
+  const handleUrlKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!showSuggestions || suggestions.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) =>
+          prev < suggestions.length - 1 ? prev + 1 : 0,
+        );
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) =>
+          prev > 0 ? prev - 1 : suggestions.length - 1,
+        );
+      } else if (e.key === "Enter" && selectedSuggestionIndex >= 0) {
+        e.preventDefault();
+        selectSuggestion(suggestions[selectedSuggestionIndex]!);
+      } else if (e.key === "Escape") {
+        setShowSuggestions(false);
+      }
+    },
+    [showSuggestions, suggestions, selectedSuggestionIndex, selectSuggestion],
+  );
+
+  // Scroll selected suggestion into view
+  useEffect(() => {
+    if (selectedSuggestionIndex < 0 || !suggestionsRef.current) return;
+    const el = suggestionsRef.current.children[selectedSuggestionIndex] as
+      | HTMLElement
+      | undefined;
+    el?.scrollIntoView({ block: "nearest" });
+  }, [selectedSuggestionIndex]);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        urlInputRef.current &&
+        !urlInputRef.current.contains(e.target as Node) &&
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleVersionChange = useCallback(
+    (newVersion: ApiVersion) => {
+      setApiVersion(newVersion);
+      setUrl((prev) =>
+        prev.replace(
+          /^(https?:\/\/graph\.microsoft\.com\/)(v1\.0|beta)/,
+          `$1${newVersion}`,
+        ),
+      );
+    },
+    [],
+  );
 
   const handleMethodChange = useCallback(
     (m: HttpMethod) => {
@@ -330,6 +479,8 @@ export default function QueryBuilder({
         }
       }
 
+      onRequest?.({ method, url, headers: parsedHeaders, body: BODY_METHODS.includes(method) ? body : undefined });
+
       const client = createGraphClient();
       const result = await client.executeRequest({
         method,
@@ -351,7 +502,7 @@ export default function QueryBuilder({
     } finally {
       setIsLoading(false);
     }
-  }, [authenticated, method, url, headers, body, onResponse]);
+  }, [authenticated, method, url, headers, body, onResponse, onRequest]);
 
   const style = METHOD_STYLES[method];
 
@@ -411,14 +562,95 @@ export default function QueryBuilder({
           )}
         </div>
 
-        {/* URL Input */}
-        <input
-          type="text"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://graph.microsoft.com/v1.0/"
-          className="h-[30px] min-w-0 flex-1 rounded border border-border-default bg-bg-elevated px-3 font-mono text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
-        />
+        {/* Version toggle */}
+        <div className="flex h-7 items-center overflow-hidden rounded-md border border-border-default">
+          {(["v1.0", "beta"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => handleVersionChange(v)}
+              className={`h-7 px-2 text-xs font-medium transition-colors ${
+                apiVersion === v
+                  ? "bg-accent-muted text-accent"
+                  : "bg-bg-elevated text-text-tertiary hover:text-text-secondary"
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+
+        {/* URL Input with autocomplete */}
+        <div className="relative min-w-0 flex-1">
+          <input
+            ref={urlInputRef}
+            type="text"
+            value={url}
+            onChange={(e) => handleUrlChange(e.target.value)}
+            onFocus={handleUrlFocus}
+            onKeyDown={handleUrlKeyDown}
+            placeholder="https://graph.microsoft.com/v1.0/"
+            className="h-[30px] w-full rounded border border-border-default bg-bg-elevated px-3 font-mono text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
+            role="combobox"
+            aria-expanded={showSuggestions}
+            aria-autocomplete="list"
+            aria-controls={`${uid}-suggestions`}
+            aria-activedescendant={
+              selectedSuggestionIndex >= 0
+                ? `${uid}-suggestion-${selectedSuggestionIndex}`
+                : undefined
+            }
+          />
+
+          {/* Autocomplete dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div
+              ref={suggestionsRef}
+              id={`${uid}-suggestions`}
+              role="listbox"
+              className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[300px] overflow-y-auto rounded-lg border border-border-default bg-bg-elevated shadow-lg shadow-black/40"
+            >
+              {suggestions.map((ep, idx) => {
+                const epStyle = METHOD_STYLES[ep.m as HttpMethod] ?? {
+                  text: "text-text-muted",
+                  bg: "bg-bg-hover",
+                };
+                return (
+                  <button
+                    key={`${ep.m}-${ep.p}`}
+                    id={`${uid}-suggestion-${idx}`}
+                    role="option"
+                    aria-selected={idx === selectedSuggestionIndex}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      selectSuggestion(ep);
+                    }}
+                    className={`flex w-full cursor-pointer flex-col gap-0.5 px-3 py-2 text-left transition-colors ${
+                      idx === selectedSuggestionIndex
+                        ? "bg-bg-hover"
+                        : "hover:bg-bg-hover"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px] font-bold leading-none ${epStyle.text} ${epStyle.bg}`}
+                      >
+                        {ep.m}
+                      </span>
+                      <span className="truncate font-mono text-xs text-text-primary">
+                        {ep.p}
+                      </span>
+                    </div>
+                    {ep.s && (
+                      <span className="truncate pl-[calc(1.5rem+0.5rem)] font-sans text-[11px] text-text-muted">
+                        {ep.s}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Send button */}
         <button
@@ -442,6 +674,9 @@ export default function QueryBuilder({
           {authWarning ? "Sign in first" : "Send"}
         </button>
       </div>
+
+      {/* ── Permission Inspector ───────────────────────────────── */}
+      <PermissionInspector method={method} url={url} />
 
       {/* ── Tab Bar ─────────────────────────────────────────────── */}
       <div className="flex h-9 items-end border-b border-border-subtle bg-bg-surface">
