@@ -1,0 +1,26 @@
+"use client";
+
+import QueryBuilder from "./_components/query-builder";
+import { ResponseViewer } from "./_components/response-viewer";
+
+export default function ExplorerPage() {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-0">
+      {/* Request Panel – 45% */}
+      <div className="flex basis-[45%] flex-col overflow-hidden rounded-t-lg border border-border-default bg-bg-surface">
+        <QueryBuilder />
+      </div>
+
+      {/* Draggable Divider */}
+      <div className="group relative z-10 flex h-1.5 shrink-0 cursor-row-resize items-center justify-center">
+        <div className="h-px w-full bg-border-subtle transition-colors group-hover:bg-accent" />
+        <div className="absolute h-1 w-8 rounded-full bg-border-default transition-colors group-hover:bg-accent" />
+      </div>
+
+      {/* Response Panel – 55% */}
+      <div className="flex basis-[55%] flex-col overflow-hidden rounded-b-lg border border-border-default bg-bg-surface">
+        <ResponseViewer />
+      </div>
+    </div>
+  );
+}
