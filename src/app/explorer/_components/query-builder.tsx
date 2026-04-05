@@ -98,7 +98,7 @@ function KVEditor({
             }`}
             aria-label={row.enabled ? "Disable" : "Enable"}
           >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+            <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none">
               <polyline
                 points="20 6 9 17 4 12"
                 stroke="currentColor"
@@ -115,7 +115,10 @@ function KVEditor({
             value={row.key}
             onChange={(e) => update(row.id, { key: e.target.value })}
             placeholder={keyPlaceholder}
-            className="h-7 flex-1 rounded border border-border-subtle bg-bg-elevated px-2 font-mono text-xs text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
+            aria-label="Header name"
+            name="header-key"
+            autoComplete="off"
+            className="h-7 flex-1 rounded border border-border-subtle bg-bg-elevated px-2 font-mono text-xs text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
           />
 
           {/* Value */}
@@ -124,7 +127,10 @@ function KVEditor({
             value={row.value}
             onChange={(e) => update(row.id, { value: e.target.value })}
             placeholder={valuePlaceholder}
-            className="h-7 flex-1 rounded border border-border-subtle bg-bg-elevated px-2 font-mono text-xs text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
+            aria-label="Header value"
+            name="header-value"
+            autoComplete="off"
+            className="h-7 flex-1 rounded border border-border-subtle bg-bg-elevated px-2 font-mono text-xs text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
           />
 
           {/* Delete */}
@@ -133,7 +139,7 @@ function KVEditor({
             className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-text-muted opacity-0 transition-all hover:bg-bg-hover hover:text-method-delete group-hover:opacity-100"
             aria-label="Remove row"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none">
               <line
                 x1="18"
                 y1="6"
@@ -162,7 +168,7 @@ function KVEditor({
         onClick={addRow}
         className="mx-3 mt-1 flex h-7 items-center gap-1.5 rounded border border-dashed border-border-subtle px-2 text-xs text-text-muted transition-colors hover:border-border-default hover:text-text-tertiary"
       >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none">
           <line
             x1="12"
             y1="5"
@@ -217,7 +223,8 @@ function BodyEditor({
         onChange={(e) => onChange(e.target.value)}
         placeholder={'{ "key": "value" }'}
         spellCheck={false}
-        className="min-h-[120px] flex-1 resize-none bg-bg-elevated p-3 font-mono text-xs leading-[1.625rem] text-text-primary placeholder:text-text-muted focus:outline-none"
+        aria-label="Request body"
+        className="min-h-[120px] flex-1 resize-none bg-bg-elevated p-3 font-mono text-xs leading-[1.625rem] text-text-primary placeholder:text-text-muted focus:outline-none focus-visible:ring-1 focus-visible:ring-accent"
       />
     </div>
   );
@@ -507,13 +514,16 @@ export default function QueryBuilder({
   const style = METHOD_STYLES[method];
 
   return (
-    <div className="flex flex-col">
+    <div className="flex min-w-0 flex-col overflow-hidden">
       {/* ── URL Bar Row ─────────────────────────────────────────── */}
-      <div className="flex h-[42px] items-center gap-2 border-b border-border-subtle px-3">
+      <div className="flex min-h-[42px] flex-wrap items-center gap-1.5 border-b border-border-subtle px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-0">
         {/* Method dropdown */}
         <div className="relative">
           <button
             onClick={() => setDropdownOpen((o) => !o)}
+            aria-haspopup="listbox"
+            aria-expanded={dropdownOpen}
+            aria-label={`HTTP method: ${method}`}
             className={`flex h-[30px] items-center gap-1.5 rounded px-2.5 font-mono text-xs font-bold tracking-wide transition-colors ${style.text} ${style.bg} hover:brightness-125`}
           >
             {method}
@@ -522,6 +532,7 @@ export default function QueryBuilder({
               height="10"
               viewBox="0 0 24 24"
               fill="none"
+              aria-hidden="true"
               className={`transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
             >
               <polyline
@@ -539,15 +550,18 @@ export default function QueryBuilder({
               {/* Backdrop */}
               <div
                 className="fixed inset-0 z-10"
+                role="presentation"
                 onClick={() => setDropdownOpen(false)}
               />
               {/* Menu */}
-              <div className="absolute left-0 top-full z-20 mt-1 w-28 overflow-hidden rounded border border-border-default bg-bg-surface shadow-xl shadow-black/40">
+              <div role="listbox" aria-label="HTTP methods" className="absolute left-0 top-full z-20 mt-1 w-28 overflow-hidden rounded border border-border-default bg-bg-surface shadow-xl shadow-black/40">
                 {METHODS.map((m) => {
                   const s = METHOD_STYLES[m];
                   return (
                     <button
                       key={m}
+                      role="option"
+                      aria-selected={m === method}
                       onClick={() => handleMethodChange(m)}
                       className={`flex w-full items-center px-3 py-1.5 font-mono text-xs font-bold tracking-wide transition-colors hover:bg-bg-hover ${s.text} ${
                         m === method ? s.bg : ""
@@ -562,8 +576,8 @@ export default function QueryBuilder({
           )}
         </div>
 
-        {/* Version toggle */}
-        <div className="flex h-7 items-center overflow-hidden rounded-md border border-border-default">
+        {/* Version toggle — hidden on very small screens */}
+        <div className="hidden h-7 items-center overflow-hidden rounded-md border border-border-default sm:flex">
           {(["v1.0", "beta"] as const).map((v) => (
             <button
               key={v}
@@ -580,7 +594,7 @@ export default function QueryBuilder({
         </div>
 
         {/* URL Input with autocomplete */}
-        <div className="relative min-w-0 flex-1">
+        <div className="relative order-last min-w-0 flex-[1_1_100%] sm:order-none sm:flex-1">
           <input
             ref={urlInputRef}
             type="text"
@@ -589,7 +603,11 @@ export default function QueryBuilder({
             onFocus={handleUrlFocus}
             onKeyDown={handleUrlKeyDown}
             placeholder="https://graph.microsoft.com/v1.0/"
-            className="h-[30px] w-full rounded border border-border-default bg-bg-elevated px-3 font-mono text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
+            aria-label="Request URL"
+            spellCheck={false}
+            autoComplete="off"
+            name="url"
+            className="h-[30px] w-full rounded border border-border-default bg-bg-elevated px-3 font-mono text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50"
             role="combobox"
             aria-expanded={showSuggestions}
             aria-autocomplete="list"
@@ -656,12 +674,12 @@ export default function QueryBuilder({
         <button
           onClick={() => void handleSend()}
           disabled={isLoading}
-          className="flex h-[30px] items-center gap-1.5 rounded bg-accent px-5 font-sans text-xs font-semibold text-bg-deep transition-colors hover:bg-accent-hover disabled:opacity-70"
+          className="flex h-[30px] items-center gap-1.5 rounded bg-accent px-3 font-sans text-xs font-semibold text-bg-deep transition-colors hover:bg-accent-hover disabled:opacity-70 sm:px-5"
         >
           {isLoading ? (
             <Spinner />
           ) : (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none">
               <path
                 d="M5 12h14M13 5l7 7-7 7"
                 stroke="currentColor"

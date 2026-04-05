@@ -105,6 +105,7 @@ function groupByDate(items: HistoryItem[]): [string, HistoryItem[]][] {
 function SearchIcon() {
   return (
     <svg
+      aria-hidden="true"
       width="14"
       height="14"
       viewBox="0 0 24 24"
@@ -128,6 +129,7 @@ function SearchIcon() {
 function ClockIcon() {
   return (
     <svg
+      aria-hidden="true"
       width="32"
       height="32"
       viewBox="0 0 24 24"
@@ -172,10 +174,14 @@ export function HistoryPanel() {
           <SearchIcon />
           <input
             type="text"
-            placeholder="Search history..."
+            placeholder="Search history…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-transparent font-mono text-xs text-text-primary placeholder:text-text-muted outline-none"
+            aria-label="Search history"
+            name="search-history"
+            autoComplete="off"
+            spellCheck={false}
+            className="w-full bg-transparent font-mono text-xs text-text-primary placeholder:text-text-muted outline-none focus-visible:ring-1 focus-visible:ring-accent"
           />
         </div>
       </div>
@@ -224,7 +230,7 @@ export function HistoryPanel() {
                           {item.url}
                         </span>
                         <span
-                          className={`shrink-0 font-mono text-xs font-medium ${statusColor(item.status)}`}
+                          className={`shrink-0 font-mono text-xs font-medium tabular-nums ${statusColor(item.status)}`}
                         >
                           {item.status}
                         </span>
@@ -232,10 +238,10 @@ export function HistoryPanel() {
 
                       {/* Second line: time + duration */}
                       <div className="flex items-center gap-1 pl-0.5">
-                        <span className="font-mono text-[10px] text-text-muted">
+                        <span className="font-mono text-[10px] tabular-nums text-text-muted">
                           {formatTime(item.timestamp)}
                         </span>
-                        <span className="font-mono text-[10px] text-text-tertiary">
+                        <span className="font-mono text-[10px] tabular-nums text-text-tertiary">
                           · {formatDuration(item.timeMs)}
                         </span>
                       </div>

@@ -190,6 +190,7 @@ function statusColorClasses(status: number): {
 function ClipboardIcon() {
   return (
     <svg
+      aria-hidden="true"
       width="14"
       height="14"
       viewBox="0 0 24 24"
@@ -208,6 +209,7 @@ function ClipboardIcon() {
 function CheckIcon() {
   return (
     <svg
+      aria-hidden="true"
       width="14"
       height="14"
       viewBox="0 0 24 24"
@@ -244,6 +246,7 @@ function DownloadIcon() {
 function BoltIcon() {
   return (
     <svg
+      aria-hidden="true"
       width="32"
       height="32"
       viewBox="0 0 24 24"
@@ -299,6 +302,8 @@ function ImagePreview({ src }: { src: string }) {
         <img
           src={src}
           alt="API response"
+          width={400}
+          height={400}
           className="relative max-h-[60vh] max-w-full object-contain"
         />
       </div>
@@ -443,8 +448,8 @@ export function ResponseViewer({
 
   if (response === null) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 py-16">
-        <svg className="h-6 w-6 animate-spin text-accent" viewBox="0 0 24 24" fill="none">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 py-16" role="status">
+        <svg aria-hidden="true" className="h-6 w-6 animate-spin text-accent" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" className="opacity-20" />
           <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
         </svg>
@@ -467,10 +472,10 @@ export function ResponseViewer({
         </span>
 
         {/* Meta */}
-        <span className="font-mono text-xs text-text-secondary">
+        <span className="font-mono text-xs tabular-nums text-text-secondary">
           {response.timeMs}ms
         </span>
-        <span className="font-mono text-xs text-text-secondary">
+        <span className="font-mono text-xs tabular-nums text-text-secondary">
           {formatBytes(response.sizeBytes)}
         </span>
 
@@ -482,12 +487,14 @@ export function ResponseViewer({
           onClick={handleCopy}
           className="inline-flex h-6 w-6 items-center justify-center rounded text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary"
           title="Copy response"
+          aria-label={copied ? "Copied" : "Copy response"}
         >
           {copied ? <CheckIcon /> : <ClipboardIcon />}
         </button>
         <button
           className="inline-flex h-6 w-6 items-center justify-center rounded text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary"
           title="Download response"
+          aria-label="Download response"
         >
           <DownloadIcon />
         </button>

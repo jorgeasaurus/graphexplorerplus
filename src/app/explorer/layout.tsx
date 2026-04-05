@@ -12,7 +12,7 @@ export default function ExplorerLayout({
       <HeaderBar />
       <div className="flex min-h-0 flex-1">
         <Sidebar />
-        <main className="flex min-h-0 flex-1 flex-col overflow-hidden p-2">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-1 sm:p-2">
           {children}
         </main>
       </div>

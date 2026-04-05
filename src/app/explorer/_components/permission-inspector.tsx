@@ -89,6 +89,7 @@ export function PermissionInspector({ method, url }: PermissionInspectorProps) {
     <div className="flex min-h-[28px] items-center gap-2 border-b border-border-subtle bg-bg-deep px-3 py-1">
       {/* Lock icon */}
       <svg
+        aria-hidden="true"
         width="12"
         height="12"
         viewBox="0 0 24 24"

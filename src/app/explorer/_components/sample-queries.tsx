@@ -232,6 +232,7 @@ const BASE_URL = "https://graph.microsoft.com";
 function SearchIcon() {
   return (
     <svg
+      aria-hidden="true"
       width="14"
       height="14"
       viewBox="0 0 24 24"
@@ -255,6 +256,7 @@ function SearchIcon() {
 function ChevronIcon({ expanded }: { expanded: boolean }) {
   return (
     <svg
+      aria-hidden="true"
       width="12"
       height="12"
       viewBox="0 0 24 24"
@@ -275,6 +277,7 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
 function SamplesIcon() {
   return (
     <svg
+      aria-hidden="true"
       width="32"
       height="32"
       viewBox="0 0 24 24"
@@ -355,10 +358,14 @@ export function SampleQueries({ onSelectQuery }: SampleQueriesProps) {
           <SearchIcon />
           <input
             type="text"
-            placeholder="Search samples..."
+            placeholder="Search samples…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-transparent font-mono text-xs text-text-primary placeholder:text-text-muted outline-none"
+            aria-label="Search samples"
+            name="search-samples"
+            autoComplete="off"
+            spellCheck={false}
+            className="w-full bg-transparent font-mono text-xs text-text-primary placeholder:text-text-muted outline-none focus-visible:ring-1 focus-visible:ring-accent"
           />
         </div>
       </div>
