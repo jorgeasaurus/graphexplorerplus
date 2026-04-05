@@ -1,45 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
-// ── Types ──────────────────────────────────────────────────────────
-
-interface HistoryItem {
-  id: string;
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  url: string;
-  status: number;
-  timeMs: number;
-  timestamp: Date;
-}
-
-// ── Mock data ──────────────────────────────────────────────────────
-
-const now = new Date();
-
-function daysAgo(days: number, hours: number, minutes: number): Date {
-  const d = new Date(now);
-  d.setDate(d.getDate() - days);
-  d.setHours(hours, minutes, 0, 0);
-  return d;
-}
-
-const MOCK_HISTORY: HistoryItem[] = [
-  { id: "h1", method: "GET", url: "/v1.0/me", status: 200, timeMs: 145, timestamp: daysAgo(0, 12, 34) },
-  { id: "h2", method: "POST", url: "/v1.0/users", status: 201, timeMs: 230, timestamp: daysAgo(0, 12, 30) },
-  { id: "h3", method: "GET", url: "/beta/me/drive/root/children", status: 401, timeMs: 89, timestamp: daysAgo(0, 12, 15) },
-  { id: "h4", method: "GET", url: "/v1.0/me/messages", status: 200, timeMs: 312, timestamp: daysAgo(0, 11, 50) },
-  { id: "h5", method: "PATCH", url: "/v1.0/me", status: 200, timeMs: 178, timestamp: daysAgo(1, 15, 45) },
-  { id: "h6", method: "DELETE", url: "/v1.0/groups/abc123", status: 204, timeMs: 95, timestamp: daysAgo(1, 14, 10) },
-  { id: "h7", method: "GET", url: "/v1.0/me/memberOf", status: 200, timeMs: 267, timestamp: daysAgo(1, 13, 22) },
-  { id: "h8", method: "POST", url: "/v1.0/me/sendMail", status: 202, timeMs: 445, timestamp: daysAgo(2, 16, 5) },
-  { id: "h9", method: "PUT", url: "/v1.0/me/photo/$value", status: 200, timeMs: 1230, timestamp: daysAgo(2, 10, 30) },
-  { id: "h10", method: "GET", url: "/v1.0/applications", status: 403, timeMs: 56, timestamp: daysAgo(2, 9, 15) },
-];
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { getHistory, clearHistory, type HistoryEntry } from "~/lib/history-store";
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
-const METHOD_CLASSES: Record<HistoryItem["method"], string> = {
+const METHOD_CLASSES: Record<string, string> = {
   GET: "text-method-get bg-method-get/10",
   POST: "text-method-post bg-method-post/10",
   PUT: "text-method-put bg-method-put/10",
@@ -53,8 +19,8 @@ function statusColor(status: number): string {
   return "text-error";
 }
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString("en-US", {
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
@@ -66,7 +32,10 @@ function formatDuration(ms: number): string {
   return `${ms}ms`;
 }
 
-function dateGroupLabel(date: Date): string {
+function dateGroupLabel(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
 
@@ -76,8 +45,8 @@ function dateGroupLabel(date: Date): string {
   const itemDay = new Date(date);
   itemDay.setHours(0, 0, 0, 0);
 
-  if (itemDay.getTime() === todayStart.getTime()) return "Today";
-  if (itemDay.getTime() === yesterdayStart.getTime()) return "Yesterday";
+  if (itemDay.getTime() >= todayStart.getTime()) return "Today";
+  if (itemDay.getTime() >= yesterdayStart.getTime()) return "Yesterday";
 
   return date.toLocaleDateString("en-US", {
     month: "short",
@@ -86,8 +55,8 @@ function dateGroupLabel(date: Date): string {
   });
 }
 
-function groupByDate(items: HistoryItem[]): [string, HistoryItem[]][] {
-  const groups = new Map<string, HistoryItem[]>();
+function groupByDate(items: HistoryEntry[]): [string, HistoryEntry[]][] {
+  const groups = new Map<string, HistoryEntry[]>();
   for (const item of items) {
     const label = dateGroupLabel(item.timestamp);
     const group = groups.get(label);
@@ -148,33 +117,74 @@ function ClockIcon() {
   );
 }
 
+function TrashIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      className="shrink-0"
+    >
+      <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // ── Component ───────────────────────────────────────────────────────
 
 export function HistoryPanel() {
+  const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  const reload = useCallback(() => setEntries(getHistory()), []);
+
+  useEffect(() => {
+    reload();
+    window.addEventListener("history-updated", reload);
+    return () => window.removeEventListener("history-updated", reload);
+  }, [reload]);
+
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return MOCK_HISTORY;
+    if (!searchQuery.trim()) return entries;
     const q = searchQuery.toLowerCase();
-    return MOCK_HISTORY.filter(
+    return entries.filter(
       (item) =>
         item.method.toLowerCase().includes(q) ||
         item.url.toLowerCase().includes(q),
     );
-  }, [searchQuery]);
+  }, [searchQuery, entries]);
 
   const groups = useMemo(() => groupByDate(filtered), [filtered]);
 
+  function handleSelect(item: HistoryEntry) {
+    setSelectedId(item.id);
+    window.dispatchEvent(
+      new CustomEvent("select-query", {
+        detail: { method: item.method, url: item.url },
+      }),
+    );
+  }
+
+  function handleClear() {
+    clearHistory();
+    setSelectedId(null);
+  }
+
   return (
     <div className="flex h-full flex-col">
-      {/* Search */}
-      <div className="p-2">
-        <div className="flex items-center gap-2 rounded border border-border-subtle bg-bg-elevated px-2 py-1.5">
+      {/* Search + Clear */}
+      <div className="flex items-center gap-1.5 p-2">
+        <div className="flex flex-1 items-center gap-2 rounded border border-border-subtle bg-bg-elevated px-2 py-1.5">
           <SearchIcon />
           <input
             type="text"
-            placeholder="Search history…"
+            placeholder="Search history..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Search history"
@@ -184,6 +194,15 @@ export function HistoryPanel() {
             className="w-full bg-transparent font-mono text-xs text-text-primary placeholder:text-text-muted outline-none focus-visible:ring-1 focus-visible:ring-accent"
           />
         </div>
+        {entries.length > 0 && (
+          <button
+            onClick={handleClear}
+            title="Clear history"
+            className="rounded p-1.5 text-text-muted transition-colors hover:bg-bg-hover hover:text-error"
+          >
+            <TrashIcon />
+          </button>
+        )}
       </div>
 
       {/* List */}
@@ -192,37 +211,36 @@ export function HistoryPanel() {
           <div className="flex flex-col items-center justify-center gap-2 py-16">
             <ClockIcon />
             <p className="text-xs text-text-muted">
-              {searchQuery.trim() ? "No matching requests" : "No requests yet"}
+              {searchQuery.trim()
+                ? "No matching requests"
+                : "Run a query to see it here"}
             </p>
           </div>
         ) : (
           groups.map(([label, items]) => (
             <div key={label}>
-              {/* Date group header */}
               <div className="sticky top-0 z-10 bg-bg-deep px-3 pt-3 pb-1">
                 <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
                   {label}
                 </span>
               </div>
 
-              {/* Items */}
               <div className="flex flex-col gap-0.5 px-2">
                 {items.map((item) => {
                   const isSelected = selectedId === item.id;
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setSelectedId(item.id)}
+                      onClick={() => handleSelect(item)}
                       className={`group flex w-full cursor-pointer flex-col gap-0.5 rounded px-2 py-1.5 text-left transition-colors hover:bg-bg-hover ${
                         isSelected
                           ? "border-l-2 border-accent bg-bg-hover"
                           : "border-l-2 border-transparent"
                       }`}
                     >
-                      {/* First line: method + url + status */}
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`shrink-0 rounded px-1 py-px font-mono text-[10px] font-bold uppercase leading-tight ${METHOD_CLASSES[item.method]}`}
+                          className={`shrink-0 rounded px-1 py-px font-mono text-[10px] font-bold uppercase leading-tight ${METHOD_CLASSES[item.method] ?? "text-text-muted"}`}
                         >
                           {item.method}
                         </span>
@@ -232,18 +250,19 @@ export function HistoryPanel() {
                         <span
                           className={`shrink-0 font-mono text-xs font-medium tabular-nums ${statusColor(item.status)}`}
                         >
-                          {item.status}
+                          {item.status || "ERR"}
                         </span>
                       </div>
 
-                      {/* Second line: time + duration */}
                       <div className="flex items-center gap-1 pl-0.5">
                         <span className="font-mono text-[10px] tabular-nums text-text-muted">
                           {formatTime(item.timestamp)}
                         </span>
-                        <span className="font-mono text-[10px] tabular-nums text-text-tertiary">
-                          · {formatDuration(item.timeMs)}
-                        </span>
+                        {item.timeMs > 0 && (
+                          <span className="font-mono text-[10px] tabular-nums text-text-tertiary">
+                            · {formatDuration(item.timeMs)}
+                          </span>
+                        )}
                       </div>
                     </button>
                   );

@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { getSelectedCloudEnvironment } from "~/lib/auth/authUtils";
+import { getGraphEndpoint } from "~/lib/auth/msalConfig";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -225,7 +227,9 @@ const METHOD_CLASSES: Record<string, string> = {
   DELETE: "text-method-delete bg-method-delete/10",
 };
 
-const BASE_URL = "https://graph.microsoft.com";
+function getBaseUrl() {
+  return getGraphEndpoint(getSelectedCloudEnvironment());
+}
 
 // ── Icons ───────────────────────────────────────────────────────────
 
@@ -339,7 +343,7 @@ export function SampleQueries({ onSelectQuery }: SampleQueriesProps) {
   }
 
   function handleSelect(query: SampleQuery) {
-    const url = `${BASE_URL}${query.path}`;
+    const url = `${getBaseUrl()}${query.path}`;
     window.dispatchEvent(
       new CustomEvent("select-query", {
         detail: { method: query.method, url },

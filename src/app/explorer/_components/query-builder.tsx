@@ -4,6 +4,9 @@ import { useState, useCallback, useId, useRef, useEffect } from "react";
 import { useIsAuthenticated } from "@azure/msal-react";
 import { createGraphClient } from "~/lib/graph/client";
 import type { GraphResponse } from "~/lib/graph/client";
+import { addHistoryEntry } from "~/lib/history-store";
+import { getSelectedCloudEnvironment } from "~/lib/auth/authUtils";
+import { getGraphEndpoint } from "~/lib/auth/msalConfig";
 import {
   loadEndpoints,
   searchEndpoints,
@@ -304,8 +307,10 @@ export default function QueryBuilder({
 }) {
   const uid = useId();
 
+  const graphBase = getGraphEndpoint(getSelectedCloudEnvironment());
+
   const [method, setMethod] = useState<HttpMethod>("GET");
-  const [url, setUrl] = useState("https://graph.microsoft.com/v1.0/me");
+  const [url, setUrl] = useState(`${graphBase}/v1.0/me`);
   const [apiVersion, setApiVersion] = useState<ApiVersion>("v1.0");
   const [activeTab, setActiveTab] = useState<Tab>("headers");
   const [headers, setHeaders] = useState<HeaderRow[]>([
@@ -339,12 +344,13 @@ export default function QueryBuilder({
   }, []);
 
   const extractPath = useCallback((fullUrl: string) => {
+    // Match any known Graph endpoint (global, usgov, germany, china)
     const match = fullUrl.match(
-      /^https?:\/\/graph\.microsoft\.com\/(v1\.0|beta)(\/.*)?$/,
+      /^https?:\/\/(?:graph\.microsoft\.(?:com|us|de)|dod-graph\.microsoft\.us|microsoftgraph\.chinacloudapi\.cn)\/(v1\.0|beta)(\/.*)?$/,
     );
     if (match) return match[2] ?? "";
     const afterBase = fullUrl.replace(
-      /^https?:\/\/graph\.microsoft\.com\/?/,
+      /^https?:\/\/(?:graph\.microsoft\.(?:com|us|de)|dod-graph\.microsoft\.us|microsoftgraph\.chinacloudapi\.cn)\/?/,
       "",
     );
     return afterBase.replace(/^(v1\.0|beta)\/?/, "");
@@ -388,7 +394,7 @@ export default function QueryBuilder({
   const selectSuggestion = useCallback(
     (ep: EndpointEntry) => {
       const path = ep.p.replace(/^\//, "");
-      const newUrl = `https://graph.microsoft.com/${apiVersion}/${path}`;
+      const newUrl = `${graphBase}/${apiVersion}/${path}`;
       setUrl(newUrl);
       setShowSuggestions(false);
       setSuggestions([]);
@@ -451,7 +457,7 @@ export default function QueryBuilder({
       setApiVersion(newVersion);
       setUrl((prev) =>
         prev.replace(
-          /^(https?:\/\/graph\.microsoft\.com\/)(v1\.0|beta)/,
+          /^(https?:\/\/(?:graph\.microsoft\.(?:com|us|de)|dod-graph\.microsoft\.us|microsoftgraph\.chinacloudapi\.cn)\/)(v1\.0|beta)/,
           `$1${newVersion}`,
         ),
       );
@@ -498,6 +504,7 @@ export default function QueryBuilder({
         body: BODY_METHODS.includes(method) ? body : undefined,
       });
       onResponse?.(result);
+      addHistoryEntry({ method, url, status: result.status, timeMs: result.timeMs });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       onResponse?.({
@@ -508,6 +515,7 @@ export default function QueryBuilder({
         timeMs: 0,
         sizeBytes: 0,
       });
+      addHistoryEntry({ method, url, status: 0, timeMs: 0 });
     } finally {
       setIsLoading(false);
     }
@@ -607,7 +615,7 @@ export default function QueryBuilder({
             onChange={(e) => handleUrlChange(e.target.value)}
             onFocus={handleUrlFocus}
             onKeyDown={handleUrlKeyDown}
-            placeholder="https://graph.microsoft.com/v1.0/"
+            placeholder={`${graphBase}/v1.0/`}
             aria-label="Request URL"
             spellCheck={false}
             autoComplete="off"
