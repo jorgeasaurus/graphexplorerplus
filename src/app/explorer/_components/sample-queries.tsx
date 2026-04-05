@@ -183,7 +183,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     ],
   },
   {
-    name: "Intune - Scripts & Remediations",
+    name: "Intune - Scripts",
     queries: [
       { method: "GET", path: "/beta/deviceManagement/deviceManagementScripts", name: "PowerShell scripts" },
       { method: "GET", path: "/beta/deviceManagement/deviceShellScripts", name: "Shell scripts (macOS)" },
