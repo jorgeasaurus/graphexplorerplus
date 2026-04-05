@@ -24,127 +24,173 @@ const LANGUAGES: { id: Language; label: string }[] = [
 
 // ── Snippet Generators ─────────────────────────────────────
 
-function generateJavaScript(method: string, url: string, headers?: Record<string, string>, body?: string): string {
-  const customHeaders = Object.entries(headers ?? {})
-    .filter(([k]) => k.toLowerCase() !== "content-type")
-    .map(([k, v]) => `\n    "${k}": "${v}"`)
-    .join(",");
+// Extract the API path (e.g. "/me" or "/users") from a full Graph URL
+function extractApiPath(url: string): { version: string; path: string } {
+  const match = url.match(/(?:graph\.microsoft\.com\/)?(v1\.0|beta)(\/.*)/);
+  if (match) return { version: match[1]!, path: match[2]! };
+  // Fallback: try to extract relative path
+  const relMatch = url.match(/^\/(v1\.0|beta)(\/.*)/);
+  if (relMatch) return { version: relMatch[1]!, path: relMatch[2]! };
+  return { version: "v1.0", path: url.startsWith("/") ? url : `/${url}` };
+}
 
-  const headerBlock = `    "Authorization": "Bearer {access_token}",\n    "Content-Type": "application/json"${customHeaders ? `,${customHeaders}` : ""}`;
+function generateJavaScript(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
+  const { path } = extractApiPath(url);
+  const methodLower = method.toLowerCase();
 
-  const bodyLine = body ? `,\n  body: JSON.stringify(${body})` : "";
+  const bodyArg = body ? `${body}` : "";
+  const callChain = body
+    ? `.api("${path}")\n  .${methodLower}(${bodyArg})`
+    : `.api("${path}")\n  .${methodLower}()`;
 
-  return `const response = await fetch("${url}", {
-  method: "${method}",
-  headers: {
-${headerBlock}
-  }${bodyLine}
+  return `import { Client } from "@microsoft/microsoft-graph-client";
+import { TokenCredentialAuthenticationProvider }
+  from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
+import { DeviceCodeCredential } from "@azure/identity";
+
+const credential = new DeviceCodeCredential({
+  tenantId: "{tenant-id}",
+  clientId: "{client-id}",
 });
 
-const data = await response.json();
-console.log(data);`;
+const authProvider = new TokenCredentialAuthenticationProvider(credential, {
+  scopes: ["https://graph.microsoft.com/.default"],
+});
+
+const client = Client.initWithMiddleware({ authProvider });
+
+const result = await client
+  ${callChain};
+
+console.log(JSON.stringify(result, null, 2));`;
 }
 
-function generateCSharp(method: string, url: string, headers?: Record<string, string>, body?: string): string {
+function generateCSharp(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
+  const { path } = extractApiPath(url);
   const methodMap: Record<string, string> = {
-    GET: "Get", POST: "Post", PUT: "Put", PATCH: "Patch", DELETE: "Delete",
+    GET: "GetAsync", POST: "PostAsync", PUT: "PutAsync", PATCH: "PatchAsync", DELETE: "DeleteAsync",
   };
-  const csMethod = methodMap[method] ?? "Get";
-
-  const customHeaders = Object.entries(headers ?? {})
-    .filter(([k]) => k.toLowerCase() !== "content-type")
-    .map(([k, v]) => `client.DefaultRequestHeaders.Add("${k}", "${v}");`)
-    .join("\n");
-  const headerLines = customHeaders ? `\n${customHeaders}\n` : "";
-
-  if (body) {
-    return `using var client = new HttpClient();
-client.DefaultRequestHeaders.Authorization =
-    new AuthenticationHeaderValue("Bearer", "{access_token}");
-${headerLines}
-var content = new StringContent(
-    @"${body}",
-    Encoding.UTF8,
-    "application/json");
-
-var response = await client.${csMethod}Async("${url}", content);
-
-var result = await response.Content.ReadAsStringAsync();
-Console.WriteLine(result);`;
-  }
-
-  return `using var client = new HttpClient();
-client.DefaultRequestHeaders.Authorization =
-    new AuthenticationHeaderValue("Bearer", "{access_token}");
-${headerLines}
-var response = await client.${csMethod}Async("${url}");
-
-var result = await response.Content.ReadAsStringAsync();
-Console.WriteLine(result);`;
-}
-
-function generatePython(method: string, url: string, headers?: Record<string, string>, body?: string): string {
-  const customHeaders = Object.entries(headers ?? {})
-    .filter(([k]) => k.toLowerCase() !== "content-type")
-    .map(([k, v]) => `\n    "${k}": "${v}"`)
-    .join(",");
-
-  const headerBlock = `    "Authorization": "Bearer {access_token}",\n    "Content-Type": "application/json"${customHeaders ? `,${customHeaders}` : ""}`;
-
-  const bodyArg = body ? `,\n    json=${body}` : "";
-
-  return `import requests
-
-headers = {
-${headerBlock}
-}
-
-response = requests.${method.toLowerCase()}(
-    "${url}",
-    headers=headers${bodyArg}
-)
-
-print(response.json())`;
-}
-
-function generatePowerShell(method: string, url: string, headers?: Record<string, string>, body?: string): string {
-  const customHeaders = Object.entries(headers ?? {})
-    .filter(([k]) => k.toLowerCase() !== "content-type")
-    .map(([k, v]) => `\n    "${k}" = "${v}"`)
-    .join("");
-
-  const headerBlock = `    "Authorization" = "Bearer {access_token}"\n    "Content-Type" = "application/json"${customHeaders}`;
+  const httpMethod = methodMap[method] ?? "GetAsync";
 
   const bodyBlock = body
-    ? `$body = @'\n${body}\n'@\n\n`
+    ? `\nvar requestBody = new StringContent(
+    @"${body.replace(/"/g, '""')}",
+    Encoding.UTF8,
+    "application/json");\n`
     : "";
 
-  const bodyParam = body ? " `\n    -Body $body" : "";
+  const sendCall = body
+    ? `var response = await graphClient.RequestAdapter
+    .SendPrimitiveAsync<Stream>(
+        new RequestInformation
+        {
+            HttpMethod = Method.${method},
+            UrlTemplate = "{+baseurl}${path}",
+            Content = requestBody,
+        });`
+    : `var response = await graphClient.RequestAdapter
+    .SendPrimitiveAsync<Stream>(
+        new RequestInformation
+        {
+            HttpMethod = Method.${method},
+            UrlTemplate = "{+baseurl}${path}",
+        });`;
 
-  return `$headers = @{
-${headerBlock}
+  return `using Microsoft.Graph;
+using Azure.Identity;
+
+var scopes = new[] { "https://graph.microsoft.com/.default" };
+var credential = new DeviceCodeCredential(new DeviceCodeCredentialOptions
+{
+    TenantId = "{tenant-id}",
+    ClientId = "{client-id}",
+});
+
+var graphClient = new GraphServiceClient(credential, scopes);
+${bodyBlock}
+${sendCall}
+
+using var reader = new StreamReader(response);
+Console.WriteLine(await reader.ReadToEndAsync());`;
 }
 
-${bodyBlock}$response = Invoke-RestMethod -Uri "${url}" \`
-    -Method ${method} \`
-    -Headers $headers${bodyParam}
+function generatePython(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
+  const { path } = extractApiPath(url);
+  const methodLower = method.toLowerCase();
+
+  const bodyBlock = body
+    ? `\nbody = ${body}\n`
+    : "";
+  const bodyArg = body ? ", content=body" : "";
+
+  return `from azure.identity import DeviceCodeCredential
+from msgraph import GraphServiceClient
+from msgraph_core import GraphClientFactory
+import httpx
+
+credential = DeviceCodeCredential(
+    tenant_id="{tenant-id}",
+    client_id="{client-id}",
+)
+
+scopes = ["https://graph.microsoft.com/.default"]
+client = GraphServiceClient(credentials=credential, scopes=scopes)
+${bodyBlock}
+# For arbitrary Graph API paths, use the request adapter
+response = await client.request_adapter.send_primitive_async(
+    request_info=client.request_adapter.create_request_information(
+        method="${methodLower}",
+        url_template="{+baseurl}${path}"${bodyArg}
+    ),
+    response_type=bytes
+)
+
+print(response.decode("utf-8"))`;
+}
+
+function generatePowerShell(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
+  const { version, path } = extractApiPath(url);
+  const uri = `/${version}${path}`;
+
+  const bodyBlock = body
+    ? `\n$body = @'\n${body}\n'@\n`
+    : "";
+
+  const bodyParam = body ? " `\n    -Body $body `\n    -ContentType 'application/json'" : "";
+
+  return `# Requires Microsoft.Graph module
+# Install-Module Microsoft.Graph -Scope CurrentUser
+
+Connect-MgGraph -Scopes "User.Read.All"
+
+${bodyBlock}$response = Invoke-MgGraphRequest \\
+    -Uri "${uri}" \\
+    -Method ${method}${bodyParam}
 
 $response | ConvertTo-Json -Depth 10`;
 }
 
-function generateGo(method: string, url: string, headers?: Record<string, string>, body?: string): string {
-  const customHeaders = Object.entries(headers ?? {})
-    .filter(([k]) => k.toLowerCase() !== "content-type")
-    .map(([k, v]) => `\n    req.Header.Set("${k}", "${v}")`)
-    .join("");
+function generateGo(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
+  const { path } = extractApiPath(url);
 
   const imports = body
-    ? `    "fmt"\n    "io"\n    "net/http"\n    "strings"`
-    : `    "fmt"\n    "io"\n    "net/http"`;
+    ? `\t"context"
+\t"fmt"
+\t"strings"
 
-  const reqLine = body
-    ? `    body := strings.NewReader(\`${body}\`)\n    req, _ := http.NewRequest("${method}", "${url}", body)`
-    : `    req, _ := http.NewRequest("${method}", "${url}", nil)`;
+\tazidentity "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+\tmsgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
+\tabstractions "github.com/microsoft/kiota-abstractions-go"`
+    : `\t"context"
+\t"fmt"
+
+\tazidentity "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+\tmsgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
+\tabstractions "github.com/microsoft/kiota-abstractions-go"`;
+
+  const bodySetup = body
+    ? `\n\treqBody := strings.NewReader(\`${body}\`)\n`
+    : "";
 
   return `package main
 
@@ -153,15 +199,24 @@ ${imports}
 )
 
 func main() {
-${reqLine}
-    req.Header.Set("Authorization", "Bearer {access_token}")
-    req.Header.Set("Content-Type", "application/json")${customHeaders}
+\tcred, _ := azidentity.NewDeviceCodeCredential(&azidentity.DeviceCodeCredentialOptions{
+\t\tTenantID: "{tenant-id}",
+\t\tClientID: "{client-id}",
+\t})
 
-    resp, _ := http.DefaultClient.Do(req)
-    defer resp.Body.Close()
+\tclient, _ := msgraphsdk.NewGraphServiceClientWithCredentials(
+\t\tcred, []string{"https://graph.microsoft.com/.default"},
+\t)
+${bodySetup}
+\treqInfo := abstractions.NewRequestInformation()
+\treqInfo.Method = abstractions.${method}
+\treqInfo.UrlTemplate = "{+baseurl}${path}"
 
-    data, _ := io.ReadAll(resp.Body)
-    fmt.Println(string(data))
+\tresult, _ := client.RequestAdapter().SendPrimitive(
+\t\tcontext.Background(), reqInfo, "string", nil,
+\t)
+
+\tfmt.Println(result)
 }`;
 }
 
@@ -192,18 +247,18 @@ const GENERATORS: Record<Language, (m: string, u: string, h?: Record<string, str
 const KEYWORD_PATTERNS: Record<Language, RegExp> = {
   javascript: /\b(const|let|var|await|async|function|import|from|export|return|new|if|else|try|catch|throw)\b/g,
   csharp: /\b(using|var|new|await|async|class|public|private|static|void|string|int|bool|null|return|if|else|try|catch|throw)\b/g,
-  python: /\b(import|from|def|class|return|if|else|elif|try|except|raise|with|as|print|None|True|False)\b/g,
-  powershell: /(\$\w+|\b(Invoke-RestMethod|ConvertTo-Json)\b|-Uri\b|-Method\b|-Headers\b|-Body\b|-Depth\b)/g,
-  go: /\b(package|import|func|var|defer|nil|string|main)\b/g,
+  python: /\b(import|from|def|class|return|if|else|elif|try|except|raise|with|as|print|None|True|False|await)\b/g,
+  powershell: /(\$\w+|\b(Connect-MgGraph|Invoke-MgGraphRequest|ConvertTo-Json|Install-Module)\b|-Uri\b|-Method\b|-Body\b|-ContentType\b|-Depth\b|-Scopes\b|-Scope\b)/g,
+  go: /\b(package|import|func|var|defer|nil|string|main|context)\b/g,
   curl: /\b(curl)\b/g,
 };
 
 const METHOD_CALL_PATTERNS: Record<Language, RegExp> = {
-  javascript: /\b(fetch|JSON\.stringify|response\.json|console\.log)\b/g,
-  csharp: /\b(ReadAsStringAsync|Console\.WriteLine|AuthenticationHeaderValue|StringContent|HttpClient|Encoding\.UTF8)\b/g,
-  python: /\b(requests\.\w+|response\.json)\b/g,
+  javascript: /\b(Client\.initWithMiddleware|TokenCredentialAuthenticationProvider|DeviceCodeCredential|client\.api|\.get|\.post|\.put|\.patch|\.delete|console\.log|JSON\.stringify)\b/g,
+  csharp: /\b(GraphServiceClient|DeviceCodeCredential|DeviceCodeCredentialOptions|RequestInformation|SendPrimitiveAsync|RequestAdapter|StreamReader|ReadToEndAsync|Console\.WriteLine|Method\.\w+|Encoding\.UTF8|StringContent)\b/g,
+  python: /\b(GraphServiceClient|DeviceCodeCredential|GraphClientFactory|request_adapter|send_primitive_async|create_request_information|decode)\b/g,
   powershell: /(?:^|\s)(@\{|@')/g,
-  go: /\b(http\.NewRequest|http\.DefaultClient\.Do|io\.ReadAll|fmt\.Println|strings\.NewReader|resp\.Body\.Close)\b/g,
+  go: /\b(azidentity\.NewDeviceCodeCredential|msgraphsdk\.NewGraphServiceClientWithCredentials|abstractions\.NewRequestInformation|RequestAdapter|SendPrimitive|fmt\.Println|strings\.NewReader)\b/g,
   curl: /(-X|-H|-d)\b/g,
 };
 
