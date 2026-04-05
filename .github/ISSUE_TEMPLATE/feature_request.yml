@@ -1,0 +1,36 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What would you like?
+      description: A clear description of the feature.
+      placeholder: "It would be useful if..."
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Query Builder
+        - Response Viewer
+        - AI Query Builder
+        - Code Snippets
+        - Permissions / Consent
+        - Resource Explorer
+        - Sidebar / Samples / History
+        - Authentication
+        - Landing Page
+        - New Feature Area
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else? Screenshots, links, use cases.
+    validations:
+      required: false
