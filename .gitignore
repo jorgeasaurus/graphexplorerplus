@@ -46,3 +46,7 @@ yarn-error.log*
 .idea
 # Prisma generated client
 generated/
+
+# Large skill/reference data (not needed at runtime)
+.agents/
+generated/
