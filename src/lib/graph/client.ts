@@ -61,14 +61,32 @@ export class GraphClient {
     const response = await fetch(fullUrl, fetchOptions);
     const timeMs = Math.round(performance.now() - startTime);
 
-    const responseBody = await response.text();
-    const sizeBytes = new Blob([responseBody]).size;
-
     // Collect response headers
     const responseHeaders: Record<string, string> = {};
     response.headers.forEach((value, key) => {
       responseHeaders[key] = value;
     });
+
+    const contentType = response.headers.get("content-type") ?? "";
+    const isBinary = /^(image\/|audio\/|video\/|application\/octet-stream|application\/pdf)/.test(contentType);
+
+    let responseBody: string;
+    let sizeBytes: number;
+
+    if (isBinary) {
+      const buf = await response.arrayBuffer();
+      sizeBytes = buf.byteLength;
+      const bytes = new Uint8Array(buf);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]!);
+      }
+      const mimeType = contentType.split(";")[0]!.trim();
+      responseBody = `data:${mimeType};base64,${btoa(binary)}`;
+    } else {
+      responseBody = await response.text();
+      sizeBytes = new Blob([responseBody]).size;
+    }
 
     return {
       status: response.status,

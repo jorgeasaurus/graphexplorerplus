@@ -273,7 +273,68 @@ function EmptyState() {
   );
 }
 
+function isDataUrl(body: string): boolean {
+  return body.startsWith("data:");
+}
+
+function isImageDataUrl(body: string): boolean {
+  return body.startsWith("data:image/");
+}
+
+function ImagePreview({ src }: { src: string }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-auto bg-bg-deep p-6">
+      <div className="relative overflow-hidden rounded-lg border border-border-subtle shadow-lg">
+        {/* Checkerboard background for transparent images */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(45deg, #1a1a2e 25%, transparent 25%), linear-gradient(-45deg, #1a1a2e 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1a1a2e 75%), linear-gradient(-45deg, transparent 75%, #1a1a2e 75%)",
+            backgroundSize: "16px 16px",
+            backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0",
+          }}
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt="API response"
+          className="relative max-h-[60vh] max-w-full object-contain"
+        />
+      </div>
+      <span className="text-[10px] text-text-muted">
+        {src.match(/^data:(image\/[^;]+)/)?.[1] ?? "image"}
+      </span>
+    </div>
+  );
+}
+
 function BodyTab({ body }: { body: string }) {
+  if (isImageDataUrl(body)) {
+    return <ImagePreview src={body} />;
+  }
+
+  if (isDataUrl(body)) {
+    const mime = body.match(/^data:([^;]+)/)?.[1] ?? "binary";
+    return (
+      <div className="flex flex-1 items-center justify-center py-16">
+        <div className="flex flex-col items-center gap-2">
+          <DownloadIcon />
+          <p className="text-xs text-text-muted">
+            Binary response ({mime})
+          </p>
+          <a
+            href={body}
+            download={`response.${mime.split("/")[1] ?? "bin"}`}
+            className="mt-2 rounded bg-accent/10 px-3 py-1 text-xs text-accent transition-colors hover:bg-accent/20"
+          >
+            Download
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   // Try to pretty-print JSON; fall back to raw text
   let displayBody = body;
   try {
@@ -345,7 +406,11 @@ function HeadersTab({ headers }: { headers: Record<string, string> }) {
   );
 }
 
-function PreviewTab() {
+function PreviewTab({ body }: { body: string }) {
+  if (isImageDataUrl(body)) {
+    return <ImagePreview src={body} />;
+  }
+
   return (
     <div className="flex flex-1 items-center justify-center py-16">
       <p className="text-xs text-text-muted">
@@ -457,7 +522,7 @@ export function ResponseViewer({
         {activeTab === "headers" && (
           <HeadersTab headers={response.headers} />
         )}
-        {activeTab === "preview" && <PreviewTab />}
+        {activeTab === "preview" && <PreviewTab body={response.body} />}
         {activeTab === "snippets" && request && (
           <CodeSnippets
             method={request.method}
