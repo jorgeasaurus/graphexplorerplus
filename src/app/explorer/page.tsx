@@ -20,6 +20,10 @@ export default function ExplorerPage() {
 
   const handleNLQuery = useCallback((query: { method: string; url: string; body?: string }) => {
     window.dispatchEvent(new CustomEvent("select-query", { detail: query }));
+    // Auto-send after React flushes the state updates from select-query
+    requestAnimationFrame(() => {
+      sendRef.current?.();
+    });
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
