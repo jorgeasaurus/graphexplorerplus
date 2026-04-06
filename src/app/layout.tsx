@@ -3,7 +3,6 @@ import "~/styles/globals.css";
 import { type Metadata } from "next";
 import { Instrument_Sans, JetBrains_Mono } from "next/font/google";
 
-import { TRPCReactProvider } from "~/trpc/react";
 import { MsalProvider } from "~/components/auth/MsalProvider";
 
 export const metadata: Metadata = {
@@ -42,9 +41,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <MsalProvider>
-          <TRPCReactProvider>{children}</TRPCReactProvider>
-        </MsalProvider>
+        <MsalProvider>{children}</MsalProvider>
       </body>
     </html>
   );

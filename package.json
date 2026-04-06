@@ -5,12 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "next build",
-    "db:generate": "prisma migrate dev",
-    "db:migrate": "prisma migrate deploy",
-    "db:push": "prisma db push",
-    "db:studio": "prisma studio",
     "dev": "next dev --turbo",
-    "postinstall": "prisma generate",
     "preview": "next build && next start",
     "start": "next start",
     "typecheck": "tsc --noEmit"
@@ -19,17 +14,10 @@
     "@azure/msal-browser": "^3.30.0",
     "@azure/msal-react": "^2.2.0",
     "@microsoft/microsoft-graph-client": "^3.0.7",
-    "@prisma/client": "^6.6.0",
     "@t3-oss/env-nextjs": "^0.12.0",
-    "@tanstack/react-query": "^5.69.0",
-    "@trpc/client": "^11.0.0",
-    "@trpc/react-query": "^11.0.0",
-    "@trpc/server": "^11.0.0",
     "next": "^15.2.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "server-only": "^0.0.1",
-    "superjson": "^2.2.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -39,12 +27,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "postcss": "^8.5.3",
-    "prisma": "^6.6.0",
     "tailwindcss": "^4.0.15",
     "typescript": "^5.8.2"
-  },
-  "ct3aMetadata": {
-    "initVersion": "7.40.0"
-  },
-  "packageManager": "npm@11.11.0"
+  }
 }

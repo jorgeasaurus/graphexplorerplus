@@ -3,7 +3,6 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    DATABASE_URL: z.string().url(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -14,11 +13,10 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_MSAL_CLIENT_ID: z.string().min(1),
     NEXT_PUBLIC_MSAL_AUTHORITY: z.string().url().default("https://login.microsoftonline.com/common"),
-    NEXT_PUBLIC_MSAL_REDIRECT_URI: z.string().url().default("http://localhost:3000"),
+    NEXT_PUBLIC_MSAL_REDIRECT_URI: z.string().url().optional(),
     NEXT_PUBLIC_AI_ENABLED: z.string().optional(),
   },
   runtimeEnv: {
-    DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
     AZURE_OPENAI_ENDPOINT: process.env.AZURE_OPENAI_ENDPOINT,
     AZURE_OPENAI_KEY: process.env.AZURE_OPENAI_KEY,

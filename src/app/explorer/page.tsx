@@ -72,7 +72,6 @@ export default function ExplorerPage() {
       <div
         role="separator"
         aria-label="Resize panels"
-        aria-valuenow={Math.round(topBasis)}
         tabIndex={0}
         onMouseDown={handleMouseDown}
         onKeyDown={(e) => {
