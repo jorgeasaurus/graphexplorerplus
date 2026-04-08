@@ -165,9 +165,6 @@ Authentication and most API calls happen client-side via MSAL.js. The Next.js se
 - [Next.js 15](https://nextjs.org) with React 19 and App Router
 - [MSAL.js](https://github.com/AzureAD/microsoft-authentication-library-for-js) for Microsoft identity (client-side only)
 - [Tailwind CSS v4](https://tailwindcss.com) with CSS-based design tokens
-- [Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service) for natural language query translation
-- [tRPC](https://trpc.io) for type-safe API layer
-- [Prisma](https://prisma.io) for database ORM
 - [Playwright](https://playwright.dev) for end-to-end testing
 
 ## Contributing

@@ -8,55 +8,25 @@ import { signIn, signOut } from "~/lib/auth/authUtils";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { CloudEnvironmentDialog } from "./explorer/_components/cloud-environment-dialog";
 
-// ── Typewriter effect for the AI demo ──────────────────────
-
-function useTypewriter(text: string, speed = 40, startDelay = 0) {
-  const [displayed, setDisplayed] = useState("");
-  const [done, setDone] = useState(false);
-
-  useEffect(() => {
-    setDisplayed("");
-    setDone(false);
-    let i = 0;
-    let interval: ReturnType<typeof setInterval>;
-
-    const timeout = setTimeout(() => {
-      interval = setInterval(() => {
-        i++;
-        setDisplayed(text.slice(0, i));
-        if (i >= text.length) {
-          clearInterval(interval);
-          setDone(true);
-        }
-      }, speed);
-    }, startDelay);
-
-    return () => {
-      clearTimeout(timeout);
-      clearInterval(interval);
-    };
-  }, [text, speed, startDelay]);
-
-  return { displayed, done };
-}
-
-// ── Feature data (real, built features only) ───────────────
+// ── Feature data ───────────────────────────────────────────
 
 const FEATURES = [
   {
-    label: "AI Queries",
-    title: "Natural Language to Graph API",
-    description: "Describe what you need in plain English. AI translates it to the exact Graph API call.",
+    label: "204 Samples",
+    title: "25 Categories, Deep Intune Coverage",
+    description:
+      "Curated queries across 14 general and 11 Intune-specific categories. Click any sample to load it.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
       </svg>
     ),
   },
   {
     label: "8 Languages",
     title: "Code Snippets with SDK Links",
-    description: "Instant code generation in PowerShell, JavaScript, C#, Python, Go, Java, PHP, and cURL.",
+    description:
+      "Instant code generation in PowerShell, JavaScript, C#, Python, Go, Java, PHP, and cURL.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
         <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
@@ -66,7 +36,8 @@ const FEATURES = [
   {
     label: "27K Endpoints",
     title: "Resource Explorer",
-    description: "Browse the entire Graph API surface as a navigable tree with instant search.",
+    description:
+      "Browse the entire Graph API surface as a navigable tree with instant search.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
@@ -76,7 +47,8 @@ const FEATURES = [
   {
     label: "Permissions",
     title: "Consent Flow & Token Inspector",
-    description: "See required scopes per endpoint, consent inline, and decode your JWT in real time.",
+    description:
+      "See required scopes per endpoint, consent inline, and decode your JWT in real time.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
@@ -86,7 +58,8 @@ const FEATURES = [
   {
     label: "Multi-Cloud",
     title: "5 Sovereign Cloud Environments",
-    description: "Global, US Gov, US Gov DoD, Germany, and China. Switch without re-authenticating.",
+    description:
+      "Global, US Gov, US Gov DoD, Germany, and China. Auth and endpoints switch together.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5a17.92 17.92 0 0 1-8.716-2.247m0 0A8.966 8.966 0 0 1 3 12c0-1.264.26-2.466.733-3.559" />
@@ -96,7 +69,8 @@ const FEATURES = [
   {
     label: "Share & Expand",
     title: "Shareable URLs & Fullscreen",
-    description: "Copy a link to any query. Expand responses fullscreen for complex payloads.",
+    description:
+      "Copy a link to any query. Expand responses fullscreen for complex payloads.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
         <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
@@ -211,12 +185,6 @@ export default function Home() {
   const displayName = accounts[0]?.name;
   const isLoading = inProgress !== InteractionStatus.None;
 
-  const nlQuery = "Show me all users with admin roles";
-  const { displayed: typedQuery, done: queryDone } = useTypewriter(nlQuery, 45, 1200);
-
-  const generatedMethod = "GET";
-  const generatedUrl = "/v1.0/directoryRoles?$expand=members";
-
   return (
     <div className="relative min-h-screen overflow-hidden bg-bg-deep font-sans text-text-primary">
       {/* ── Grid background ── */}
@@ -272,11 +240,11 @@ export default function Home() {
           style={{ textWrap: "balance" }}
         >
           <span className="bg-gradient-to-b from-text-primary to-text-secondary bg-clip-text text-transparent">
-            Ask in English.
+            27,000 endpoints.
           </span>
           <br />
           <span className="bg-gradient-to-b from-text-primary to-text-secondary bg-clip-text text-transparent">
-            Get the API call.
+            One power tool.
           </span>
         </h1>
 
@@ -284,7 +252,7 @@ export default function Home() {
           className="animate-fade-up mx-auto mt-6 max-w-lg text-base leading-relaxed text-text-secondary sm:text-lg"
           style={{ animationDelay: "0.12s" }}
         >
-          AI-powered query builder, 27K endpoint autocomplete, 8-language code snippets, permission consent flow, and everything the official explorer doesn&apos;t have.
+          204 curated samples, 8-language code snippets, inline permission consent, token inspector, and everything the official explorer doesn&apos;t have.
         </p>
 
         <div
@@ -314,72 +282,97 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── AI Demo Card ── */}
+      {/* ── Explorer Demo Card ── */}
       <section className="relative z-10 mx-auto max-w-3xl px-6 py-10 sm:py-14">
         <div
           className="animate-fade-up overflow-hidden rounded-2xl border border-border-subtle bg-bg-surface shadow-[0_0_80px_rgba(0,212,170,0.05)]"
           style={{ animationDelay: "0.35s" }}
         >
-          {/* Natural language input */}
-          <div className="border-b border-border-subtle px-5 py-4">
-            <div className="mb-2 flex items-center gap-2">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4 text-accent">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
-              </svg>
-              <span className="font-mono text-[10px] font-medium uppercase tracking-widest text-accent">
-                AI Query Builder
+          {/* Title bar */}
+          <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-deep/50 px-4 py-2.5">
+            <div className="flex gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-error/60" />
+              <div className="h-2.5 w-2.5 rounded-full bg-warning/60" />
+              <div className="h-2.5 w-2.5 rounded-full bg-success/60" />
+            </div>
+            <span className="ml-2 font-mono text-[10px] font-medium uppercase tracking-widest text-text-muted">
+              Graph Explorer+
+            </span>
+          </div>
+
+          {/* URL bar */}
+          <div className="border-b border-border-subtle px-5 py-3.5">
+            <div className="flex items-center gap-2.5 font-mono text-sm">
+              <span className="shrink-0 rounded bg-method-get/15 px-2 py-0.5 text-xs font-bold text-method-get">
+                GET
+              </span>
+              <span className="truncate text-text-secondary">
+                /beta/deviceManagement/managedDevices
+                <span className="text-text-muted">
+                  ?$filter=operatingSystem eq &apos;Windows&apos;&amp;$select=deviceName,osVersion
+                </span>
               </span>
             </div>
-            <p className="font-sans text-base text-text-primary">
-              {typedQuery}
-              {!queryDone && <span className="animate-terminal-blink ml-0.5 inline-block h-4 w-0.5 bg-accent align-middle" />}
-            </p>
           </div>
 
-          {/* Generated API call */}
-          <div className="bg-bg-deep/50 px-5 py-4">
-            <div
-              className={`transition-all duration-500 ${queryDone ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}
-            >
-              <p className="mb-2 font-mono text-[10px] font-medium uppercase tracking-widest text-text-muted">
-                Generated API Call
-              </p>
-              <div className="flex items-center gap-2 font-mono text-sm">
-                <span className="rounded bg-method-get/15 px-2 py-0.5 text-xs font-bold text-method-get">
-                  {generatedMethod}
-                </span>
-                <span className="text-text-secondary">
-                  {generatedUrl}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Mock response preview */}
-          <div
-            className={`border-t border-border-subtle px-5 py-4 transition-all delay-300 duration-500 ${queryDone ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}
-          >
+          {/* Response */}
+          <div className="border-b border-border-subtle px-5 py-4">
             <div className="mb-3 flex items-center gap-2">
               <span className="rounded bg-success/15 px-2 py-0.5 font-mono text-xs font-semibold text-success">
                 200 OK
               </span>
-              <span className="font-mono text-xs text-text-muted">38ms</span>
-              <span className="font-mono text-xs text-text-muted">2.1 KB</span>
+              <span className="font-mono text-xs text-text-muted">42ms</span>
+              <span className="font-mono text-xs text-text-muted">1.8 KB</span>
             </div>
-
             <pre className="font-mono text-xs leading-relaxed">
               <span className="text-text-muted">{"{"}</span>{"\n"}
               <span className="text-text-muted">{"  "}</span>
               <span className="text-accent">&quot;value&quot;</span>
-              <span className="text-text-muted">: [{"{"} </span>
-              <span className="text-accent">&quot;displayName&quot;</span>
+              <span className="text-text-muted">: [</span>{"\n"}
+              <span className="text-text-muted">{"    "}</span>
+              <span className="text-text-muted">{"{"} </span>
+              <span className="text-accent">&quot;deviceName&quot;</span>
               <span className="text-text-muted">: </span>
-              <span className="text-method-put">&quot;Global Administrator&quot;</span>
+              <span className="text-method-put">&quot;DESKTOP-A1B2C3&quot;</span>
               <span className="text-text-muted">, </span>
-              <span className="text-accent">&quot;members&quot;</span>
-              <span className="text-text-muted">: [...]</span>
-              <span className="text-text-muted"> {"}"}]</span>{"\n"}
+              <span className="text-accent">&quot;osVersion&quot;</span>
+              <span className="text-text-muted">: </span>
+              <span className="text-method-put">&quot;10.0.22631.4890&quot;</span>
+              <span className="text-text-muted"> {"}"}</span>
+              <span className="text-text-muted">,</span>{"\n"}
+              <span className="text-text-muted">{"    "}... 23 more</span>{"\n"}
+              <span className="text-text-muted">{"  "}]</span>{"\n"}
               <span className="text-text-muted">{"}"}</span>
+            </pre>
+          </div>
+
+          {/* Code snippet */}
+          <div className="bg-bg-deep/50 px-5 py-4">
+            <div className="mb-3 flex gap-1 overflow-x-auto">
+              {["PowerShell", "JavaScript", "C#", "Python", "Go", "Java", "PHP", "cURL"].map(
+                (lang, i) => (
+                  <span
+                    key={lang}
+                    className={`shrink-0 rounded px-2 py-0.5 font-mono text-[10px] font-medium ${
+                      i === 0
+                        ? "bg-accent/15 text-accent"
+                        : "text-text-muted"
+                    }`}
+                  >
+                    {lang}
+                  </span>
+                ),
+              )}
+            </div>
+            <pre className="font-mono text-xs leading-relaxed">
+              <span className="text-method-patch">$uri</span>
+              <span className="text-text-muted"> = </span>
+              <span className="text-method-put">&quot;https://graph.microsoft.com/beta/deviceManagement/managedDevices&quot;</span>{"\n"}
+              <span className="text-method-get">Invoke-MgGraphRequest</span>
+              <span className="text-text-secondary"> -Method </span>
+              <span className="text-method-put">GET</span>
+              <span className="text-text-secondary"> -Uri </span>
+              <span className="text-method-patch">$uri</span>
             </pre>
           </div>
         </div>
@@ -394,7 +387,7 @@ export default function Home() {
           {[
             { value: 27000, suffix: "+", label: "Endpoints" },
             { value: 8, suffix: "", label: "Languages" },
-            { value: 198, suffix: "", label: "Sample Queries" },
+            { value: 204, suffix: "", label: "Sample Queries" },
             { value: 5, suffix: "", label: "Cloud Envs" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
