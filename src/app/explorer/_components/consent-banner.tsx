@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { consentToScopes } from "~/lib/auth/authUtils";
 import { loadPermissions, lookupPermissions } from "~/lib/data/permissions";
+import { extractGraphPath } from "~/lib/graph/url-utils";
 
 interface ConsentBannerProps {
   status: number;
@@ -49,16 +50,6 @@ function parseScopesFromError(body: string): string[] {
   }
 
   return scopes;
-}
-
-function extractGraphPath(url: string): string {
-  try {
-    const u = new URL(url);
-    return u.pathname.replace(/^\/(v1\.0|beta)/, "");
-  } catch {
-    const path = url.startsWith("/") ? url : `/${url}`;
-    return path.replace(/^\/(v1\.0|beta)/, "");
-  }
 }
 
 export function ConsentBanner({ status, body, method, url, onRetry }: ConsentBannerProps) {

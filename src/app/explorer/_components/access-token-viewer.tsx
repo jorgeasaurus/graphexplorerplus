@@ -1,20 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { getAccessToken, isAuthenticated } from "~/lib/auth/authUtils";
 import { CopyButton } from "~/components/copy-button";
-
-function decodeJwt(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const base64 = parts[1]!.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
-    return JSON.parse(atob(padded)) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
+import { decodeJwtPayload } from "~/lib/auth/jwt-utils";
 
 function formatExpiry(exp: number): string {
   const date = new Date(exp * 1000);
@@ -80,7 +69,7 @@ export function AccessTokenViewer() {
 
   if (!token) return null;
 
-  const decoded = decodeJwt(token);
+  const decoded = decodeJwtPayload(token);
 
   return (
     <div className="flex flex-1 flex-col overflow-y-auto">

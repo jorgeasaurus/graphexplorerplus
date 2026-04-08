@@ -7,6 +7,8 @@ import {
   type EndpointPermissions,
 } from "~/lib/data/permissions";
 import { getAccessToken, consentToScopes, isAuthenticated } from "~/lib/auth/authUtils";
+import { extractGraphPath } from "~/lib/graph/url-utils";
+import { decodeJwtPayload } from "~/lib/auth/jwt-utils";
 
 const SCOPE_DESCRIPTIONS: Record<string, string> = {
   "Directory.ReadWrite.All":
@@ -126,32 +128,12 @@ function getDescription(scope: string): string {
   return SCOPE_DESCRIPTIONS[scope] ?? "Allows the app to access this resource on your behalf.";
 }
 
-function extractPath(url: string): string {
-  try {
-    const u = new URL(url);
-    return u.pathname;
-  } catch {
-    return url.startsWith("/") ? url : `/${url}`;
-  }
-}
-
-function stripGraphPrefix(path: string): string {
-  return path.replace(/^\/(v1\.0|beta)/, "");
-}
-
 function decodeTokenScopes(token: string): Set<string> {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return new Set();
-    const base64 = parts[1]!.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
-    const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
-    const scp = payload.scp as string | undefined;
-    if (!scp) return new Set();
-    return new Set(scp.split(" ").map((s) => s.trim()).filter(Boolean));
-  } catch {
-    return new Set();
-  }
+  const payload = decodeJwtPayload(token);
+  if (!payload) return new Set();
+  const scp = payload.scp as string | undefined;
+  if (!scp) return new Set();
+  return new Set(scp.split(" ").map((s) => s.trim()).filter(Boolean));
 }
 
 interface ModifyPermissionsProps {
@@ -183,7 +165,7 @@ export function ModifyPermissions({ method, url }: ModifyPermissionsProps) {
       setLoading(true);
       try {
         const index = await loadPermissions();
-        const path = stripGraphPrefix(extractPath(url));
+        const path = extractGraphPath(url);
         const result = lookupPermissions(index, method, path);
         setPerms(result);
       } catch {

@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { getSelectedCloudEnvironment } from "~/lib/auth/authUtils";
 import { getGraphEndpoint } from "~/lib/auth/msalConfig";
+import { METHOD_CLASSES } from "~/lib/graph/method-styles";
+import { SearchIcon } from "~/components/icons/search-icon";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -18,9 +20,7 @@ interface SampleCategory {
   queries: SampleQuery[];
 }
 
-export interface SampleQueriesProps {
-  onSelectQuery?: (query: { method: string; url: string }) => void;
-}
+export interface SampleQueriesProps {}
 
 // ── Curated Samples ────────────────────────────────────────────────
 
@@ -255,13 +255,13 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     name: "Intune - Apps",
     queries: [
       { method: "GET", path: "/v1.0/deviceAppManagement/mobileApps", name: "All mobile apps" },
-      { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.win32LobApp", name: "Win32 apps" },
-      { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.winGetApp", name: "WinGet apps" },
-      { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.iosStoreApp", name: "iOS Store apps" },
-      { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.androidManagedStoreApp", name: "Android Managed apps" },
-      { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.macOSDmgApp", name: "macOS DMG apps" },
-      { method: "GET", path: "/v1.0/deviceAppManagement/mobileApps/graph.macOSLobApp", name: "macOS LOB apps" },
-      { method: "GET", path: "/beta/deviceAppManagement/mobileApps/graph.microsoftStoreForBusinessApp", name: "Store for Business apps" },
+      { method: "GET", path: "/beta/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.win32LobApp')", name: "Win32 apps" },
+      { method: "GET", path: "/beta/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.winGetApp')", name: "WinGet apps" },
+      { method: "GET", path: "/beta/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.iosStoreApp')", name: "iOS Store apps" },
+      { method: "GET", path: "/beta/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.androidManagedStoreApp')", name: "Android Managed apps" },
+      { method: "GET", path: "/beta/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.macOSDmgApp')", name: "macOS DMG apps" },
+      { method: "GET", path: "/beta/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.macOSLobApp')", name: "macOS LOB apps" },
+      { method: "GET", path: "/beta/deviceAppManagement/mobileApps?$filter=isof('microsoft.graph.microsoftStoreForBusinessApp')", name: "Store for Business apps" },
       { method: "GET", path: "/v1.0/deviceAppManagement/mobileApps/{mobileApp-id}/assignments", name: "App assignments" },
       { method: "GET", path: "/beta/deviceAppManagement/mobileApps/{mobileApp-id}/deviceStatuses", name: "App install statuses" },
       { method: "GET", path: "/v1.0/deviceAppManagement/mobileAppCategories", name: "App categories" },
@@ -352,43 +352,11 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
-const METHOD_CLASSES: Record<string, string> = {
-  GET: "text-method-get bg-method-get/10",
-  POST: "text-method-post bg-method-post/10",
-  PUT: "text-method-put bg-method-put/10",
-  PATCH: "text-method-patch bg-method-patch/10",
-  DELETE: "text-method-delete bg-method-delete/10",
-};
-
 function getBaseUrl() {
   return getGraphEndpoint(getSelectedCloudEnvironment());
 }
 
 // ── Icons ───────────────────────────────────────────────────────────
-
-function SearchIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      className="shrink-0 text-text-muted"
-    >
-      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
-      <line
-        x1="21"
-        y1="21"
-        x2="16.65"
-        y2="16.65"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
 function ChevronIcon({ expanded }: { expanded: boolean }) {
   return (
@@ -443,7 +411,7 @@ function SamplesIcon() {
 
 // ── Component ───────────────────────────────────────────────────────
 
-export function SampleQueries({ onSelectQuery }: SampleQueriesProps) {
+export function SampleQueries(_props: SampleQueriesProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     () => new Set(SAMPLE_CATEGORIES.filter((c) => c.expanded).map((c) => c.name)),
@@ -482,7 +450,6 @@ export function SampleQueries({ onSelectQuery }: SampleQueriesProps) {
         detail: { method: query.method, url },
       }),
     );
-    onSelectQuery?.({ method: query.method, url });
   }
 
   const isSearching = searchQuery.trim().length > 0;

@@ -35,41 +35,6 @@ function SparkleIcon({ className }: { className?: string }) {
   );
 }
 
-const EXAMPLES = [
-  "Show me all non-compliant devices",
-  "List users whose accounts are disabled",
-  "Get all Conditional Access policies",
-  "Find Windows Autopilot devices",
-  "Show my recent Teams messages",
-  "List apps and their credential expiration dates",
-  "Get all Intune PowerShell scripts",
-  "Show risky sign-ins from today",
-  "Get all groups I'm a member of",
-  "List all security alerts",
-  "Show me my calendar events for this week",
-  "Get all device configuration profiles",
-  "List all app registrations in my tenant",
-  "Show users with admin roles",
-  "Find devices running Windows 11",
-  "Get all SharePoint sites",
-  "Show guest users in my tenant",
-  "List devices that haven't synced in 30 days",
-  "Get my OneDrive recent files",
-  "Show all Intune app protection policies",
-  "List all compliance policies",
-  "Find users with no MFA registered",
-  "Get Teams activity report for last 7 days",
-  "Show my Planner tasks",
-  "List all named locations in Conditional Access",
-  "Get all deleted users",
-  "Show corporate-owned devices",
-  "List all assignment filters in Intune",
-  "Get all security incidents",
-  "Show Settings Catalog policies",
-  "List service principals and their credentials",
-  "Get my direct reports",
-];
-
 const EXAMPLE_CATEGORIES: { label: string; items: string[] }[] = [
   {
     label: "Identity",

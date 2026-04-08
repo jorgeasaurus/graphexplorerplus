@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadEndpoints, type EndpointEntry } from "~/lib/data/endpoints";
+import { getSelectedCloudEnvironment } from "~/lib/auth/authUtils";
+import { getGraphEndpoint } from "~/lib/auth/msalConfig";
+import { METHOD_CLASSES } from "~/lib/graph/method-styles";
+import { SearchIcon } from "~/components/icons/search-icon";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -15,16 +19,6 @@ interface TreeNode {
 type ApiVersion = "v1.0" | "beta";
 
 // ── Constants ──────────────────────────────────────────────────────
-
-const GRAPH_BASE = "https://graph.microsoft.com";
-
-const METHOD_CLASSES: Record<string, string> = {
-  GET: "text-method-get bg-method-get/15",
-  POST: "text-method-post bg-method-post/15",
-  PUT: "text-method-put bg-method-put/15",
-  PATCH: "text-method-patch bg-method-patch/15",
-  DELETE: "text-method-delete bg-method-delete/15",
-};
 
 const METHOD_ORDER: Record<string, number> = {
   GET: 0,
@@ -94,30 +88,6 @@ function filterTree(node: TreeNode, query: string): TreeNode | null {
 }
 
 // ── Icons ──────────────────────────────────────────────────────────
-
-function SearchIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      className="shrink-0 text-text-muted"
-    >
-      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
-      <line
-        x1="21"
-        y1="21"
-        x2="16.65"
-        y2="16.65"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
 function ChevronIcon({ expanded }: { expanded: boolean }) {
   return (
@@ -196,7 +166,7 @@ function TreeNodeRow({
 
   function handleMethodClick(e: React.MouseEvent, method: string) {
     e.stopPropagation();
-    const url = `${GRAPH_BASE}/${version}${node.fullPath}`;
+    const url = `${getGraphEndpoint(getSelectedCloudEnvironment())}/${version}${node.fullPath}`;
     window.dispatchEvent(
       new CustomEvent("select-query", { detail: { method, url } }),
     );

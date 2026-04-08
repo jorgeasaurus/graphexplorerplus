@@ -6,24 +6,11 @@ import {
   lookupPermissions,
   type EndpointPermissions,
 } from "~/lib/data/permissions";
+import { extractGraphPath } from "~/lib/graph/url-utils";
 
 interface PermissionInspectorProps {
   method: string;
   url: string;
-}
-
-function extractPath(url: string): string {
-  try {
-    const u = new URL(url);
-    return u.pathname;
-  } catch {
-    // Not a full URL — treat as relative path
-    return url.startsWith("/") ? url : `/${url}`;
-  }
-}
-
-function stripGraphPrefix(path: string): string {
-  return path.replace(/^\/(v1\.0|beta)/, "");
 }
 
 const PILL_LIMIT = 4;
@@ -68,7 +55,7 @@ export function PermissionInspector({ method, url }: PermissionInspectorProps) {
   const lookup = useCallback(async (m: string, u: string) => {
     try {
       const index = await loadPermissions();
-      const path = stripGraphPrefix(extractPath(u));
+      const path = extractGraphPath(u);
       setPerms(lookupPermissions(index, m, path));
     } catch {
       setPerms(null);
