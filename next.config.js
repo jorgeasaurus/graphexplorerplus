@@ -39,7 +39,7 @@ const config = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'sha256-662ozv371eEDXn1Dzp5cczWc0rFRlfR3T9gkMIW0Q5Q=' https://va.vercel-scripts.com",
+              "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' data:",
