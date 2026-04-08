@@ -7,8 +7,15 @@ export function getSelectedCloudEnvironment(): CloudEnvironment {
   return selectedCloudEnvironment;
 }
 
+let environmentLocked = false;
+
 export function setSelectedCloudEnvironment(environment: CloudEnvironment): void {
+  if (environmentLocked && environment !== selectedCloudEnvironment) {
+    console.warn("[SECURITY] Cloud environment already locked for this session.");
+    return;
+  }
   selectedCloudEnvironment = environment;
+  environmentLocked = true;
   if (typeof window !== "undefined") {
     sessionStorage.setItem("cloudEnvironment", environment);
   }
@@ -103,6 +110,7 @@ export async function signOut(): Promise<void> {
   if (account) {
     await msalInstance.logoutPopup({ account });
   }
+  environmentLocked = false;
 }
 
 export function isAuthenticated(): boolean {

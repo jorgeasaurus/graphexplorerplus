@@ -82,6 +82,25 @@ export class GraphClient {
     const response = await fetch(fullUrl, fetchOptions);
     const timeMs = Math.round(performance.now() - startTime);
 
+    // Handle Graph API rate limiting (429)
+    if (response.status === 429) {
+      const retryAfter = response.headers.get("Retry-After");
+      const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 30;
+      return {
+        status: 429,
+        statusText: "Too Many Requests",
+        headers: { "Retry-After": String(retrySeconds) },
+        body: JSON.stringify({
+          error: {
+            code: "TooManyRequests",
+            message: `Rate limited by Microsoft Graph. Retry after ${retrySeconds} seconds.`,
+          },
+        }),
+        timeMs,
+        sizeBytes: 0,
+      };
+    }
+
     // Graph Reports endpoints (and others) return 302 redirects to a pre-signed
     // download URL on a different origin. With redirect:"manual" the browser
     // returns an opaque-redirect we can't read, so detect and handle it.

@@ -51,9 +51,12 @@ export const msalConfig: Configuration = {
     authority:
       env.NEXT_PUBLIC_MSAL_AUTHORITY ??
       "https://login.microsoftonline.com/common",
-    redirectUri: env.NEXT_PUBLIC_MSAL_REDIRECT_URI ?? "http://localhost:3000",
+    redirectUri:
+      env.NEXT_PUBLIC_MSAL_REDIRECT_URI ??
+      (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"),
     postLogoutRedirectUri:
-      env.NEXT_PUBLIC_MSAL_REDIRECT_URI ?? "http://localhost:3000",
+      env.NEXT_PUBLIC_MSAL_REDIRECT_URI ??
+      (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"),
   },
   cache: {
     cacheLocation: "sessionStorage",

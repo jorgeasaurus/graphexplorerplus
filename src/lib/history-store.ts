@@ -20,11 +20,19 @@ export function getHistory(): HistoryEntry[] {
   }
 }
 
+/** Strip email addresses and GUIDs from URLs before persisting */
+function sanitizeUrl(url: string): string {
+  return url
+    .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "<email>")
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "<id>");
+}
+
 export function addHistoryEntry(entry: Omit<HistoryEntry, "id" | "timestamp">): void {
   if (typeof window === "undefined") return;
   const entries = getHistory();
   entries.unshift({
     ...entry,
+    url: sanitizeUrl(entry.url),
     id: crypto.randomUUID(),
     timestamp: new Date().toISOString(),
   });

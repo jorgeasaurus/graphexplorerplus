@@ -13,9 +13,78 @@ interface ResponsesAPIResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Security: allowed origins for the AI route
+// ---------------------------------------------------------------------------
+const ALLOWED_ORIGINS = new Set([
+  "http://localhost:3000",
+  "http://localhost:3001",
+]);
+
+function isAllowedOrigin(request: NextRequest): boolean {
+  const origin = request.headers.get("origin");
+  const referer = request.headers.get("referer");
+
+  // In production, check against deployed URL
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) {
+    ALLOWED_ORIGINS.add(`https://${vercelUrl}`);
+  }
+  const prodUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (prodUrl) {
+    ALLOWED_ORIGINS.add(prodUrl.replace(/\/+$/, ""));
+  }
+
+  if (origin && ALLOWED_ORIGINS.has(origin)) return true;
+  if (referer) {
+    try {
+      const refOrigin = new URL(referer).origin;
+      if (ALLOWED_ORIGINS.has(refOrigin)) return true;
+    } catch { /* invalid referer */ }
+  }
+
+  // Allow same-origin requests (no Origin header in same-origin fetch)
+  return !origin && !referer;
+}
+
+// ---------------------------------------------------------------------------
+// Security: simple in-memory rate limiter
+// ---------------------------------------------------------------------------
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 30; // 30 requests per minute
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  entry.count++;
+  return entry.count <= RATE_LIMIT_MAX;
+}
+
+// ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
 export async function POST(request: NextRequest) {
+  // Origin validation
+  if (!isAllowedOrigin(request)) {
+    return NextResponse.json(
+      { error: "Forbidden." },
+      { status: 403 },
+    );
+  }
+
+  // Rate limiting
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment." },
+      { status: 429 },
+    );
+  }
+
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
   const key = process.env.AZURE_OPENAI_KEY;
   const model = process.env.AZURE_OPENAI_DEPLOYMENT;
@@ -37,7 +106,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { prompt } = body as { prompt?: string };
+  const { prompt, graphBase } = body as { prompt?: string; graphBase?: string };
 
   if (!prompt || typeof prompt !== "string") {
     return NextResponse.json(
@@ -53,6 +122,27 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Log suspicious prompt injection attempts
+  if (/ignore.*instruction|system.*prompt|jailbreak|disregard.*previous/i.test(prompt)) {
+    console.warn("[SECURITY] Potential prompt injection attempt:", {
+      prompt: prompt.slice(0, 100),
+      ip,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  // Validate graphBase against known sovereign cloud endpoints
+  const ALLOWED_GRAPH_BASES = [
+    "https://graph.microsoft.com",
+    "https://graph.microsoft.us",
+    "https://dod-graph.microsoft.us",
+    "https://graph.microsoft.de",
+    "https://microsoftgraph.chinacloudapi.cn",
+  ];
+  const resolvedBase = ALLOWED_GRAPH_BASES.includes(graphBase ?? "")
+    ? graphBase!
+    : "https://graph.microsoft.com";
+
   const base = endpoint.replace(/\/+$/, "");
   const apiUrl = `${base}/openai/responses?api-version=2025-04-01-preview`;
 
@@ -65,7 +155,7 @@ export async function POST(request: NextRequest) {
     body: JSON.stringify({
       model,
       input: [
-        { role: "developer", content: buildSystemPrompt() },
+        { role: "developer", content: buildSystemPrompt(resolvedBase) },
         { role: "user", content: prompt },
       ],
       text: {

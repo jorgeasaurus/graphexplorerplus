@@ -21,6 +21,7 @@ export function AccessTokenViewer() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDecoded, setShowDecoded] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
   const fetchToken = useCallback(async () => {
     if (!isAuthenticated()) {
@@ -123,9 +124,33 @@ export function AccessTokenViewer() {
         </div>
       )}
 
+      {/* Security warning */}
+      <div className="flex items-center gap-2 border-b border-border-subtle bg-amber-500/5 px-4 py-1.5">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-amber-500">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span className="text-[11px] text-amber-500/90">
+          Never share this token or paste it into untrusted applications.
+        </span>
+      </div>
+
       {/* Content */}
-      <div className="flex-1 p-4">
-        {showDecoded && decoded ? (
+      <div className="relative flex-1 p-4">
+        {!revealed ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-8">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-muted">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            <p className="text-xs text-text-secondary">Token is hidden for security</p>
+            <button
+              onClick={() => setRevealed(true)}
+              className="rounded-md bg-bg-hover px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:bg-accent-muted hover:text-accent"
+            >
+              Reveal token
+            </button>
+          </div>
+        ) : showDecoded && decoded ? (
           <pre className="whitespace-pre-wrap break-all font-mono text-xs leading-relaxed text-text-primary">
             {JSON.stringify(decoded, null, 2)}
           </pre>
