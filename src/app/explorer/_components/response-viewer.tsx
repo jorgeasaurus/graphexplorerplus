@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { CodeSnippets } from "./code-snippets";
 import { ConsentBanner } from "./consent-banner";
 import { CopyButton } from "~/components/copy-button";
@@ -55,7 +55,7 @@ function highlightJson(json: string): React.ReactNode[] {
         continue;
       }
 
-      // Strings — determine if key or value based on what follows the closing quote
+      // Strings - determine if key or value based on what follows the closing quote
       if (line[i] === '"') {
         let str = '"';
         i++;
@@ -194,6 +194,7 @@ function statusColorClasses(status: number): {
 function DownloadIcon() {
   return (
     <svg
+      aria-hidden="true"
       width="14"
       height="14"
       viewBox="0 0 24 24"
@@ -426,14 +427,46 @@ export function ResponseViewer({
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("body");
   const [expanded, setExpanded] = useState(false);
+  const fullscreenRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Close fullscreen on Escape key
+  const closeFullscreen = useCallback(() => setExpanded(false), []);
+
+  // Fullscreen focus trap and Escape handling
   useEffect(() => {
     if (!expanded) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setExpanded(false); };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [expanded]);
+
+    const dialog = fullscreenRef.current;
+    if (!dialog) return;
+
+    const previouslyFocused = document.activeElement as HTMLElement;
+
+    closeButtonRef.current?.focus();
+
+    const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeFullscreen();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusables = dialog.querySelectorAll<HTMLElement>(focusableSelector);
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last?.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first?.focus(); }
+      }
+    };
+
+    dialog.addEventListener("keydown", handleKeyDown);
+    return () => {
+      dialog.removeEventListener("keydown", handleKeyDown);
+      previouslyFocused?.focus();
+    };
+  }, [expanded, closeFullscreen]);
 
   if (response === undefined) return <EmptyState />;
 
@@ -529,8 +562,10 @@ export function ResponseViewer({
       {/* Fullscreen modal */}
       {expanded && typeof document !== "undefined" && createPortal(
         <div
+          ref={fullscreenRef}
           className="fixed inset-0 z-50 flex flex-col bg-bg-deep/95 backdrop-blur-sm"
           role="dialog"
+          aria-modal="true"
           aria-label="Response fullscreen view"
         >
           <div className="flex h-12 items-center gap-3 border-b border-border-subtle px-4">
@@ -542,7 +577,8 @@ export function ResponseViewer({
             <div className="flex-1" />
             <CopyButton text={response.body} label="Copy response" />
             <button
-              onClick={() => setExpanded(false)}
+              ref={closeButtonRef}
+              onClick={closeFullscreen}
               className="flex h-9 w-9 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-primary"
               aria-label="Close fullscreen"
             >

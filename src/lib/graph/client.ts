@@ -44,6 +44,27 @@ export class GraphClient {
 
     const fullUrl = url.startsWith("http") ? url : `${this.baseUrl}${url.startsWith("/") ? "" : "/"}${url}`;
 
+    // Validate URL targets a known Graph endpoint to prevent token leakage
+    const allowedOrigins = [
+      "https://graph.microsoft.com",
+      "https://graph.microsoft.us",
+      "https://dod-graph.microsoft.us",
+      "https://graph.microsoft.de",
+      "https://microsoftgraph.chinacloudapi.cn",
+    ];
+    const targetUrl = url.startsWith("http") ? url : `https://graph.microsoft.com${url}`;
+    const targetOrigin = new URL(targetUrl).origin;
+    if (!allowedOrigins.includes(targetOrigin)) {
+      return {
+        status: 403,
+        statusText: "Forbidden",
+        headers: {},
+        body: JSON.stringify({ error: `Refusing to send token to non-Graph origin: ${targetOrigin}` }),
+        timeMs: 0,
+        sizeBytes: 0,
+      };
+    }
+
     const headers = await this.getHeaders(customHeaders, scopes);
 
     const startTime = performance.now();
@@ -51,6 +72,7 @@ export class GraphClient {
     const fetchOptions: RequestInit = {
       method,
       headers,
+      redirect: "manual",
     };
 
     if (body && method !== "GET" && method !== "DELETE") {
@@ -59,6 +81,25 @@ export class GraphClient {
 
     const response = await fetch(fullUrl, fetchOptions);
     const timeMs = Math.round(performance.now() - startTime);
+
+    // Graph Reports endpoints (and others) return 302 redirects to a pre-signed
+    // download URL on a different origin. With redirect:"manual" the browser
+    // returns an opaque-redirect we can't read, so detect and handle it.
+    if (response.type === "opaqueredirect" || (response.status >= 300 && response.status < 400)) {
+      const location = response.headers.get("location") ?? "";
+      return {
+        status: response.status || 302,
+        statusText: response.statusText || "Redirect",
+        headers: location ? { location } : {},
+        body: JSON.stringify({
+          message: "This endpoint returned a redirect to a downloadable report.",
+          downloadUrl: location || "(browser blocked cross-origin redirect — open this endpoint in a new tab to download)",
+          hint: "Reports endpoints return CSV/file downloads via redirect. Open the URL directly or use PowerShell: Invoke-MgGraphRequest",
+        }, null, 2),
+        timeMs,
+        sizeBytes: 0,
+      };
+    }
 
     const responseHeaders: Record<string, string> = Object.fromEntries(response.headers.entries());
 
@@ -71,6 +112,29 @@ export class GraphClient {
     if (isBinary) {
       const buf = await response.arrayBuffer();
       sizeBytes = buf.byteLength;
+
+      // Intune report endpoints return CSV/JSON as application/octet-stream.
+      // Try to decode as UTF-8 text first — if it's valid text, return it directly.
+      if (contentType.includes("octet-stream")) {
+        try {
+          const decoded = new TextDecoder("utf-8", { fatal: true }).decode(buf);
+          // If decoding succeeded and contains printable text, treat as text
+          if (decoded.length > 0 && !decoded.includes("\0")) {
+            responseBody = decoded;
+            return {
+              status: response.status,
+              statusText: response.statusText,
+              headers: responseHeaders,
+              body: responseBody,
+              timeMs,
+              sizeBytes,
+            };
+          }
+        } catch {
+          // Not valid UTF-8 — fall through to base64 encoding
+        }
+      }
+
       const bytes = new Uint8Array(buf);
       const CHUNK_SIZE = 8192;
       const chunks: string[] = [];

@@ -12,6 +12,7 @@ export function getTheme(): Theme {
 }
 
 export function setTheme(theme: Theme): void {
+  if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, theme);
   applyTheme(theme);
 }
@@ -23,6 +24,7 @@ export function toggleTheme(): Theme {
 }
 
 export function applyTheme(theme: Theme): void {
+  if (typeof window === "undefined") return;
   const root = document.documentElement;
   root.classList.remove("dark", "light");
   root.classList.add(theme);

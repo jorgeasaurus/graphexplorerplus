@@ -35,59 +35,69 @@ function SparkleIcon({ className }: { className?: string }) {
   );
 }
 
-const EXAMPLE_CATEGORIES: { label: string; items: string[] }[] = [
+interface ExampleItem {
+  text: string;
+  license?: string;
+}
+
+const EXAMPLE_CATEGORIES: { label: string; items: ExampleItem[] }[] = [
   {
     label: "Identity",
     items: [
-      "List users whose accounts are disabled",
-      "Show users with admin roles",
-      "Get all groups I'm a member of",
-      "List all app registrations in my tenant",
-      "List apps and their credential expiration dates",
-      "Show guest users in my tenant",
-      "Find users with no MFA registered",
-      "Get all deleted users",
-      "Get my direct reports",
-      "List service principals and their credentials",
+      { text: "List users whose accounts are disabled" },
+      { text: "Show users with admin roles" },
+      { text: "Get all groups I'm a member of" },
+      { text: "List all app registrations in my tenant" },
+      { text: "List apps and their credential expiration dates" },
+      { text: "Show guest users in my tenant" },
+      { text: "Find users with no MFA registered", license: "Entra P1" },
+      { text: "Get the authorization policy for my tenant" },
+      { text: "Get all deleted users" },
+      { text: "Get my direct reports" },
+      { text: "List service principals and their credentials" },
+      { text: "Show organization details and verified domains" },
+      { text: "List all license SKUs and usage" },
     ],
   },
   {
     label: "Intune",
     items: [
-      "Show me all non-compliant devices",
-      "Find devices running Windows 11",
-      "Get all device configuration profiles",
-      "Find Windows Autopilot devices",
-      "Get all Intune PowerShell scripts",
-      "List devices that haven't synced in 30 days",
-      "Show all Intune app protection policies",
-      "List all compliance policies",
-      "Show corporate-owned devices",
-      "List all assignment filters in Intune",
-      "Show Settings Catalog policies",
+      { text: "Show me all non-compliant devices" },
+      { text: "Find devices running Windows 11" },
+      { text: "Get all device configuration profiles" },
+      { text: "Find Windows Autopilot devices" },
+      { text: "Get all Intune PowerShell scripts" },
+      { text: "List devices that haven't synced in 30 days" },
+      { text: "Show all Intune app protection policies" },
+      { text: "List all compliance policies" },
+      { text: "Show corporate-owned devices" },
+      { text: "List all assignment filters in Intune" },
+      { text: "Show Settings Catalog policies" },
+      { text: "Get app install summary report" },
+      { text: "Show all detected apps in Intune" },
+      { text: "Get remote action audit logs" },
     ],
   },
   {
     label: "Security",
     items: [
-      "Get all Conditional Access policies",
-      "Show risky sign-ins from today",
-      "List all security alerts",
-      "Show risky users in my tenant",
-      "List all named locations in Conditional Access",
-      "Get all security incidents",
+      { text: "Get all Conditional Access policies" },
+      { text: "List all security alerts" },
+      { text: "List all named locations in Conditional Access" },
+      { text: "Get all security incidents" },
+      { text: "Run an advanced hunting query", license: "Defender XDR" },
     ],
   },
   {
     label: "Productivity",
     items: [
-      "Show my recent Teams messages",
-      "Show me my calendar events for this week",
-      "Get all SharePoint sites",
-      "List my recent emails",
-      "Get my OneDrive recent files",
-      "Show my Planner tasks",
-      "Get Teams activity report for last 7 days",
+      { text: "Show my recent Teams messages" },
+      { text: "Show me my calendar events for this week" },
+      { text: "Get all SharePoint sites" },
+      { text: "List my recent emails" },
+      { text: "Get my OneDrive recent files" },
+      { text: "Show my Planner tasks" },
+      { text: "Get Teams activity report for last 7 days" },
     ],
   },
 ];
@@ -100,7 +110,15 @@ export function NLQueryBar({ onQueryGenerated }: NLQueryBarProps) {
   const [showExamples, setShowExamples] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const configured = isAIConfigured();
+
+  // Abort in-flight AI request on unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -130,15 +148,27 @@ export function NLQueryBar({ onQueryGenerated }: NLQueryBarProps) {
     setShowExamples(false);
 
     try {
-      const result = await naturalLanguageToQuery(query);
+      // Cancel any in-flight request
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      const result = await naturalLanguageToQuery(query, { signal: controller.signal });
       onQueryGenerated({
         method: result.method,
         url: result.url,
-        body: result.body ?? undefined,
+        body: typeof result.body === "object" && result.body !== null
+          ? JSON.stringify(result.body)
+          : (result.body as string | undefined) ?? undefined,
       });
       setPrompt("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate query");
+      if (err instanceof Error && err.name === "AbortError") return;
+      setError(
+        err instanceof Error
+          ? `${err.message}. Try selecting an example query from the dropdown.`
+          : "Failed to generate query. Try selecting an example query from the dropdown.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -239,13 +269,18 @@ export function NLQueryBar({ onQueryGenerated }: NLQueryBarProps) {
               </div>
               {cat.items.map((item) => (
                 <button
-                  key={item}
-                  onClick={() => selectExample(item)}
-                  onDoubleClick={() => void handleSubmit(item)}
+                  key={item.text}
+                  onClick={() => selectExample(item.text)}
+                  onDoubleClick={() => void handleSubmit(item.text)}
                   className="flex h-10 w-full items-center gap-2.5 px-4 text-left text-sm text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary"
                 >
                   <SparkleIcon className="shrink-0 text-accent/40" />
-                  {item}
+                  <span className="flex-1 truncate">{item.text}</span>
+                  {item.license && (
+                    <span className="shrink-0 rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-amber-400">
+                      {item.license}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -261,6 +296,9 @@ export function NLQueryBar({ onQueryGenerated }: NLQueryBarProps) {
       {error && (
         <p className="px-1 text-[11px] text-error">{error}</p>
       )}
+      <p className="px-1 text-[10px] text-text-muted/50">
+        AI-generated queries may be inaccurate. Always verify the endpoint and parameters before sending.
+      </p>
     </div>
   );
 }

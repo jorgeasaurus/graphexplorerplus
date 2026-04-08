@@ -17,7 +17,12 @@ export async function loadEndpoints(): Promise<EndpointIndex> {
   if (loading) return loading;
 
   loading = fetch("/data/endpoints.json")
-    .then((r) => r.json())
+    .then((r) => {
+      if (!r.ok) {
+        throw new Error(`Failed to load endpoints index: ${r.status} ${r.statusText}`);
+      }
+      return r.json();
+    })
     .then((data: EndpointIndex) => {
       cache = data;
       return data;

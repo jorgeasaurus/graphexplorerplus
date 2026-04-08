@@ -21,6 +21,7 @@ export function getHistory(): HistoryEntry[] {
 }
 
 export function addHistoryEntry(entry: Omit<HistoryEntry, "id" | "timestamp">): void {
+  if (typeof window === "undefined") return;
   const entries = getHistory();
   entries.unshift({
     ...entry,
@@ -33,6 +34,7 @@ export function addHistoryEntry(entry: Omit<HistoryEntry, "id" | "timestamp">): 
 }
 
 export function clearHistory(): void {
+  if (typeof window === "undefined") return;
   localStorage.removeItem(STORAGE_KEY);
   window.dispatchEvent(new Event("history-updated"));
 }

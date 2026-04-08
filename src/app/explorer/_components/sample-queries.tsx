@@ -12,6 +12,8 @@ interface SampleQuery {
   method: string;
   path: string;
   name: string;
+  body?: string;
+  license?: string;
 }
 
 interface SampleCategory {
@@ -148,9 +150,10 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
     queries: [
       { method: "GET", path: "/v1.0/identity/conditionalAccess/policies", name: "Conditional Access policies" },
       { method: "GET", path: "/v1.0/identity/conditionalAccess/namedLocations", name: "Named locations" },
-      { method: "GET", path: "/v1.0/identityProtection/riskyUsers", name: "Risky users" },
-      { method: "GET", path: "/v1.0/identityProtection/riskDetections", name: "Risk detections" },
-      { method: "GET", path: "/beta/identityProtection/riskyServicePrincipals", name: "Risky service principals" },
+      { method: "GET", path: "/v1.0/policies/authorizationPolicy", name: "Authorization policy" },
+      { method: "GET", path: "/v1.0/identityProtection/riskyUsers", name: "Risky users", license: "Entra P2" },
+      { method: "GET", path: "/v1.0/identityProtection/riskDetections", name: "Risk detections", license: "Entra P2" },
+      { method: "GET", path: "/beta/identityProtection/riskyServicePrincipals", name: "Risky service principals", license: "Entra P2" },
       { method: "GET", path: "/v1.0/policies/authenticationMethodsPolicy", name: "Auth methods policy" },
       { method: "GET", path: "/beta/policies/authenticationMethodsPolicy/authenticationMethodConfigurations", name: "Auth method configs" },
       { method: "GET", path: "/v1.0/policies/tokenLifetimePolicies", name: "Token lifetime policies" },
@@ -163,10 +166,13 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
       { method: "GET", path: "/v1.0/directoryRoles", name: "Active directory roles" },
       { method: "GET", path: "/v1.0/directoryRoles/{directoryRole-id}/members", name: "Role members" },
       { method: "GET", path: "/v1.0/roleManagement/directory/roleAssignments", name: "Role assignments" },
+      { method: "GET", path: "/v1.0/roleManagement/directory/roleAssignments?$expand=principal", name: "Role assignments (with principals)" },
       { method: "GET", path: "/v1.0/roleManagement/directory/roleDefinitions", name: "Role definitions" },
       { method: "GET", path: "/v1.0/domains", name: "Domains" },
       { method: "GET", path: "/v1.0/organization", name: "Organization details" },
+      { method: "GET", path: "/v1.0/organization?$select=id,displayName,verifiedDomains,tenantType", name: "Tenant info" },
       { method: "GET", path: "/v1.0/subscribedSkus", name: "Subscribed licenses" },
+      { method: "GET", path: "/v1.0/subscribedSkus?$select=skuPartNumber,consumedUnits,prepaidUnits", name: "License usage" },
       { method: "GET", path: "/beta/directory/deletedItems/microsoft.graph.user", name: "Deleted users" },
       { method: "GET", path: "/beta/directory/deletedItems/microsoft.graph.group", name: "Deleted groups" },
     ],
@@ -180,6 +186,7 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
       { method: "GET", path: "/beta/security/secureScoreControlProfiles", name: "Secure score controls" },
       { method: "GET", path: "/v1.0/security/threatIntelligence/hosts/{host}", name: "Threat intel host" },
       { method: "GET", path: "/beta/security/attackSimulation/simulations", name: "Attack simulations" },
+      { method: "POST", path: "/beta/security/runHuntingQuery", name: "Advanced hunting query", license: "Defender XDR", body: JSON.stringify({"Query":"DeviceLogonEvents | take 10"}, null, 2) },
       { method: "GET", path: "/v1.0/auditLogs/signIns?$top=20", name: "Recent sign-ins" },
       { method: "GET", path: "/v1.0/auditLogs/directoryAudits?$top=20", name: "Directory audit logs" },
       { method: "GET", path: "/beta/auditLogs/provisioning?$top=20", name: "Provisioning logs" },
@@ -195,7 +202,8 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
       { method: "GET", path: "/v1.0/reports/getSharePointSiteUsageDetail(period='D7')", name: "SharePoint site usage" },
       { method: "GET", path: "/beta/reports/getM365AppUserDetail(period='D7')", name: "M365 app usage" },
       { method: "GET", path: "/beta/reports/authenticationMethods/usersRegisteredByMethod", name: "MFA registration" },
-      { method: "GET", path: "/beta/reports/credentialUserRegistrationDetails", name: "Credential registration" },
+      { method: "GET", path: "/beta/reports/authenticationMethods/userRegistrationDetails", name: "MFA registration details", license: "Entra P1" },
+      { method: "GET", path: "/beta/reports/authenticationMethods/userRegistrationDetails?$filter=isMfaRegistered eq false", name: "Users without MFA", license: "Entra P1" },
     ],
   },
   {
@@ -327,13 +335,14 @@ const SAMPLE_CATEGORIES: SampleCategory[] = [
   {
     name: "Intune - Reporting",
     queries: [
-      { method: "GET", path: "/v1.0/deviceManagement/reports", name: "Reports overview" },
+      { method: "GET", path: "/v1.0/deviceManagement/deviceCompliancePolicySettingStateSummaries", name: "Compliance setting summaries" },
       { method: "GET", path: "/v1.0/deviceManagement/auditEvents", name: "Audit events" },
-      { method: "GET", path: "/v1.0/deviceManagement/detectedApps", name: "Detected apps" },
+      { method: "GET", path: "/beta/deviceManagement/detectedApps", name: "Discovered apps" },
       { method: "GET", path: "/beta/deviceManagement/managedDeviceOverview", name: "Device overview" },
-      { method: "POST", path: "/beta/deviceManagement/reports/getDeviceNonComplianceReport", name: "Non-compliance report" },
-      { method: "POST", path: "/beta/deviceManagement/reports/getConfigurationPolicyNonComplianceReport", name: "Config policy report" },
-      { method: "POST", path: "/beta/deviceManagement/reports/getDeviceInstallStatusReport", name: "App install status report" },
+      { method: "POST", path: "/beta/deviceManagement/reports/getDeviceNonComplianceReport", name: "Non-compliance report", body: JSON.stringify({"select":["DeviceName","UPN","ComplianceState","OS","OSVersion","OwnerType","LastContact","ManagementAgents","InGracePeriodUntil","DeviceHealthThreatLevel","UserEmail","UserName","IntuneDeviceId","AadDeviceId","UserId","IMEI","SerialNumber","RetireAfterDatetime"],"orderBy":[],"search":"","filter":"","skip":0,"top":50}, null, 2) },
+      { method: "POST", path: "/beta/deviceManagement/reports/getConfigurationPolicyNonComplianceReport", name: "Config policy report", body: JSON.stringify({"select":["PolicyName","PolicyId","UnifiedPolicyType","PolicyBaseTypeName","ProfileSource","UnifiedPolicyPlatformType","NumberOfNonCompliantOrErrorDevices","NumberOfConflictDevices"],"orderBy":[],"search":"","filter":"((PolicyBaseTypeName eq 'Microsoft.Management.Services.Api.DeviceConfiguration') or (PolicyBaseTypeName eq 'DeviceManagementConfigurationPolicy') or (PolicyBaseTypeName eq 'Microsoft.Management.Services.Api.DeviceManagementIntent'))","skip":0,"top":50}, null, 2) },
+      { method: "POST", path: "/beta/deviceManagement/reports/getAppsInstallSummaryReport", name: "App install summary report", body: JSON.stringify({"select":["DisplayName","Publisher","Platform","AppVersion","FailedDevicePercentage","FailedDeviceCount","FailedUserCount","InstalledDeviceCount","InstalledUserCount","PendingInstallDeviceCount","PendingInstallUserCount","NotApplicableDeviceCount","NotApplicableUserCount","NotInstalledDeviceCount","NotInstalledUserCount","ApplicationId"],"filter":"","skip":0,"search":"","orderBy":["DisplayName"],"top":50}, null, 2) },
+      { method: "GET", path: "/beta/deviceManagement/remoteActionAudits", name: "Remote action audits" },
       { method: "GET", path: "/beta/deviceManagement/virtualEndpoint/cloudPCs", name: "Cloud PCs" },
       { method: "GET", path: "/beta/deviceManagement/userExperienceAnalyticsOverview", name: "UX Analytics overview" },
       { method: "GET", path: "/beta/deviceManagement/userExperienceAnalyticsDeviceScores", name: "UX Analytics scores" },
@@ -447,7 +456,7 @@ export function SampleQueries(_props: SampleQueriesProps) {
     const url = `${getBaseUrl()}${query.path}`;
     window.dispatchEvent(
       new CustomEvent("select-query", {
-        detail: { method: query.method, url },
+        detail: { method: query.method, url, body: query.body },
       }),
     );
   }
@@ -518,6 +527,11 @@ export function SampleQueries(_props: SampleQueriesProps) {
                         <span className="min-w-0 flex-1 truncate text-xs text-text-primary">
                           {query.name}
                         </span>
+                        {query.license && (
+                          <span className="shrink-0 rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-amber-400">
+                            {query.license}
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>

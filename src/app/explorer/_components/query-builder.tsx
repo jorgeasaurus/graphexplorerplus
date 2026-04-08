@@ -18,7 +18,7 @@ import { AccessTokenViewer } from "./access-token-viewer";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 type ApiVersion = "v1.0" | "beta";
-type Tab = "headers" | "body" | "params" | "auth" | "permissions" | "token";
+type Tab = "headers" | "body" | "permissions" | "token";
 
 interface HeaderRow {
   id: string;
@@ -229,40 +229,6 @@ function BodyEditor({
   );
 }
 
-// ─── Auth Tab ────────────────────────────────────────────────────────
-
-function AuthTab({ authenticated }: { authenticated: boolean }) {
-  return (
-    <div className="flex flex-col gap-4 px-4 py-4">
-      {/* Status card */}
-      <div className="flex items-center gap-3 rounded border border-border-subtle bg-bg-elevated px-4 py-3">
-        <span className="relative flex h-2 w-2">
-          {!authenticated && (
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-50" />
-          )}
-          <span
-            className={`inline-flex h-2 w-2 rounded-full ${authenticated ? "bg-success" : "bg-warning"}`}
-          />
-        </span>
-        <div>
-          <p className="text-xs font-medium text-text-primary">
-            {authenticated ? "Authenticated" : "Not authenticated"}
-          </p>
-          <p className="text-[11px] text-text-muted">
-            {authenticated
-              ? "Bearer token will be attached to requests automatically"
-              : "Sign in to send authenticated requests"}
-          </p>
-        </div>
-      </div>
-
-      <p className="text-[11px] text-text-muted">
-        Session tokens are managed via the header bar sign-in flow.
-      </p>
-    </div>
-  );
-}
-
 // ─── Spinner ─────────────────────────────────────────────────────────
 
 function Spinner() {
@@ -302,8 +268,15 @@ export default function QueryBuilder({
   sendRef?: React.MutableRefObject<(() => void) | null>;
 }) {
   const uid = useId();
+  const authenticated = useIsAuthenticated();
 
-  const graphBase = getGraphEndpoint(getSelectedCloudEnvironment());
+  const [graphBase, setGraphBase] = useState(getGraphEndpoint(getSelectedCloudEnvironment()));
+
+  // Re-sync when auth state changes (which happens after cloud env selection)
+  useEffect(() => {
+    const newBase = getGraphEndpoint(getSelectedCloudEnvironment());
+    setGraphBase(newBase);
+  }, [authenticated]);
 
   const [method, setMethod] = useState<HttpMethod>("GET");
   const [url, setUrl] = useState(`${graphBase}/v1.0/me`);
@@ -312,15 +285,12 @@ export default function QueryBuilder({
   const [headers, setHeaders] = useState<HeaderRow[]>([
     { id: makeId(), key: "Content-Type", value: "application/json", enabled: true },
   ]);
-  const [params, setParams] = useState<HeaderRow[]>([
-    { id: makeId(), key: "", value: "", enabled: true },
-  ]);
   const [body, setBody] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [pendingSend, setPendingSend] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [authWarning, setAuthWarning] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
-  const authenticated = useIsAuthenticated();
 
   // Autocomplete state
   const [suggestions, setSuggestions] = useState<EndpointEntry[]>([]);
@@ -332,12 +302,15 @@ export default function QueryBuilder({
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { method: string; url: string; body?: string };
+      const detail = (e as CustomEvent).detail as { method: string; url: string; body?: string; autoSend?: boolean };
       setMethod(detail.method as HttpMethod);
       setUrl(detail.url);
+      setBody(detail.body ?? "");
       if (detail.body) {
-        setBody(detail.body);
         setActiveTab("body");
+      }
+      if (detail.autoSend) {
+        setPendingSend(true);
       }
     };
     window.addEventListener("select-query", handler);
@@ -346,11 +319,11 @@ export default function QueryBuilder({
 
   // Hydrate from shared URL params
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const m = params.get("m");
-    const u = params.get("u");
-    const v = params.get("v");
-    const b = params.get("b");
+    const searchParams = new URLSearchParams(window.location.search);
+    const m = searchParams.get("m");
+    const u = searchParams.get("u");
+    const v = searchParams.get("v");
+    const b = searchParams.get("b");
     if (m && METHODS.includes(m as HttpMethod)) setMethod(m as HttpMethod);
     if (u) setUrl(u);
     if (v && (v === "v1.0" || v === "beta")) setApiVersion(v);
@@ -417,7 +390,7 @@ export default function QueryBuilder({
       setSuggestions([]);
       setSelectedSuggestionIndex(-1);
     },
-    [apiVersion],
+    [apiVersion, graphBase],
   );
 
   const handleUrlKeyDown = useCallback(
@@ -539,7 +512,19 @@ export default function QueryBuilder({
   }, [authenticated, method, url, headers, body, onResponse, onRequest]);
 
   // Expose send function to parent for retry-after-consent
-  if (sendRef) sendRef.current = () => void handleSend();
+  useEffect(() => {
+    if (sendRef) {
+      sendRef.current = () => void handleSend();
+    }
+  }, [handleSend, sendRef]);
+
+  // Auto-send after state is flushed from select-query with autoSend
+  useEffect(() => {
+    if (pendingSend) {
+      setPendingSend(false);
+      void handleSend();
+    }
+  }, [pendingSend, handleSend]);
 
   const style = METHOD_STYLES[method];
 
@@ -572,7 +557,7 @@ export default function QueryBuilder({
                     <button
                       key={m}
                       role="option"
-                      aria-selected={m === method}
+                      aria-selected={m === method ? "true" : "false"}
                       onClick={() => handleMethodChange(m)}
                       className={`flex h-9 w-full items-center rounded-lg px-3 font-mono text-xs font-bold tracking-wide transition-colors hover:bg-bg-hover ${s.text} ${m === method ? s.bg : ""}`}
                     >
@@ -649,7 +634,7 @@ export default function QueryBuilder({
                     key={`${ep.m}-${ep.p}`}
                     id={`${uid}-suggestion-${idx}`}
                     role="option"
-                    aria-selected={idx === selectedSuggestionIndex}
+                    aria-selected={idx === selectedSuggestionIndex ? "true" : "false"}
                     onMouseDown={(e) => { e.preventDefault(); selectSuggestion(ep); }}
                     className={`flex w-full cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2 text-left transition-colors ${
                       idx === selectedSuggestionIndex ? "bg-bg-hover" : "hover:bg-bg-hover"
@@ -743,10 +728,6 @@ export default function QueryBuilder({
           <KVEditor rows={headers} onChange={setHeaders} keyPlaceholder="Header" valuePlaceholder="Value" />
         )}
         {activeTab === "body" && <BodyEditor value={body} onChange={setBody} />}
-        {activeTab === "params" && (
-          <KVEditor rows={params} onChange={setParams} keyPlaceholder="Parameter" valuePlaceholder="Value" />
-        )}
-        {activeTab === "auth" && <AuthTab authenticated={authenticated} />}
         {activeTab === "permissions" && <ModifyPermissions method={method} url={url} />}
         {activeTab === "token" && <AccessTokenViewer />}
       </div>

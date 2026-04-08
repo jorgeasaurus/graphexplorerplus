@@ -1,11 +1,12 @@
 "use client";
 
-import { type ReactNode, useState, useRef, useEffect, useCallback } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { InteractionStatus } from "@azure/msal-browser";
-import { signIn, signOut, setSelectedCloudEnvironment, getSelectedCloudEnvironment } from "~/lib/auth/authUtils";
+import { signIn, signOut, getSelectedCloudEnvironment, loadCloudEnvironmentFromSession } from "~/lib/auth/authUtils";
 import { type CloudEnvironment } from "~/lib/auth/msalConfig";
 import { ThemeToggle } from "~/components/theme-toggle";
+import { CloudEnvironmentDialog } from "./cloud-environment-dialog";
 
 function getInitials(name: string | undefined): string {
   if (!name) return "?";
@@ -17,13 +18,13 @@ function getInitials(name: string | undefined): string {
     .slice(0, 2);
 }
 
-const CLOUD_OPTIONS: { id: CloudEnvironment; label: string }[] = [
-  { id: "global", label: "Global" },
-  { id: "usgov", label: "US Gov" },
-  { id: "usgovdod", label: "US Gov DoD" },
-  { id: "germany", label: "Germany" },
-  { id: "china", label: "China" },
-];
+const CLOUD_LABELS: Record<CloudEnvironment, string> = {
+  global: "Commercial",
+  usgov: "GCC High",
+  usgovdod: "DoD",
+  germany: "Germany",
+  china: "China",
+};
 
 export function HeaderBar() {
   const isAuth = useIsAuthenticated();
@@ -31,31 +32,33 @@ export function HeaderBar() {
   const displayName = accounts[0]?.name;
   const isLoading = inProgress !== InteractionStatus.None;
 
-  const [cloudOpen, setCloudOpen] = useState(false);
+  const [showCloudDialog, setShowCloudDialog] = useState(false);
   const [cloudEnv, setCloudEnv] = useState<CloudEnvironment>("global");
-  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setCloudEnv(getSelectedCloudEnvironment());
+    setCloudEnv(loadCloudEnvironmentFromSession());
   }, []);
 
+  // Sync cloud env state after auth completes
   useEffect(() => {
-    if (!cloudOpen) return;
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setCloudOpen(false);
-      }
+    if (isAuth) {
+      setCloudEnv(getSelectedCloudEnvironment());
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [cloudOpen]);
+  }, [isAuth]);
 
-  const handleCloudChange = useCallback((env: CloudEnvironment) => {
-    setSelectedCloudEnvironment(env);
-    setCloudEnv(env);
-    setCloudOpen(false);
-    window.location.reload();
-  }, []);
+  const handleSignInClick = () => {
+    setShowCloudDialog(true);
+  };
+
+  const handleCloudSelect = async (env: CloudEnvironment) => {
+    setShowCloudDialog(false);
+    try {
+      await signIn(env);
+      setCloudEnv(env);
+    } catch (err) {
+      console.error("Sign in error:", err);
+    }
+  };
 
   let authContent: ReactNode;
   if (isLoading) {
@@ -77,7 +80,7 @@ export function HeaderBar() {
   } else {
     authContent = (
       <button
-        onClick={() => void signIn()}
+        onClick={handleSignInClick}
         className="flex h-9 items-center gap-2 rounded-lg bg-accent/10 px-4 text-xs font-semibold text-accent transition-colors hover:bg-accent/20"
       >
         Sign In
@@ -86,54 +89,40 @@ export function HeaderBar() {
   }
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border-subtle bg-bg-deep px-4 sm:px-5">
-      <a href="/" className="flex items-center" aria-label="Home">
-        <span className="font-sans text-lg font-bold tracking-tight text-text-primary">
-          Graph Explorer<span className="text-accent">+</span>
-        </span>
-      </a>
+    <>
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border-subtle bg-bg-deep px-4 sm:px-5">
+        <a href="/" className="flex items-center" aria-label="Home">
+          <span className="font-sans text-lg font-bold tracking-tight text-text-primary">
+            Graph Explorer<span className="text-accent">+</span>
+          </span>
+        </a>
 
-      <div className="flex-1" />
+        <div className="flex-1" />
 
-      <div className="flex items-center gap-1">
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setCloudOpen((o) => !o)}
-            className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary"
-            aria-label="Cloud environment"
-            aria-expanded={cloudOpen}
-          >
-            {CLOUD_OPTIONS.find((o) => o.id === cloudEnv)?.label ?? "Global"}
-          </button>
-
-          {cloudOpen && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-xl border border-border-default bg-bg-elevated shadow-2xl">
-              <div className="p-1.5">
-                {CLOUD_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.id}
-                    onClick={() => handleCloudChange(opt.id)}
-                    className={`flex h-9 w-full items-center gap-2.5 rounded-lg px-3 text-left text-xs font-medium transition-colors ${
-                      cloudEnv === opt.id
-                        ? "bg-accent-muted text-accent"
-                        : "text-text-secondary hover:bg-bg-hover hover:text-text-primary"
-                    }`}
-                  >
-                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${cloudEnv === opt.id ? "bg-accent" : "bg-text-muted"}`} />
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
+        <div className="flex items-center gap-1">
+          {/* Cloud environment badge (read-only, shows connected cloud) */}
+          {isAuth && (
+            <div className="flex items-center gap-1.5 rounded-lg bg-accent/5 px-3 py-1.5 border border-accent/15">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-accent">
+                {CLOUD_LABELS[cloudEnv]}
+              </span>
             </div>
           )}
+
+          <ThemeToggle />
+
+          <div className="mx-1 h-5 w-px bg-border-subtle" aria-hidden="true" />
+
+          {authContent}
         </div>
+      </header>
 
-        <ThemeToggle />
-
-        <div className="mx-1 h-5 w-px bg-border-subtle" aria-hidden="true" />
-
-        {authContent}
-      </div>
-    </header>
+      <CloudEnvironmentDialog
+        open={showCloudDialog}
+        onSelect={(env) => void handleCloudSelect(env)}
+        onCancel={() => setShowCloudDialog(false)}
+      />
+    </>
   );
 }

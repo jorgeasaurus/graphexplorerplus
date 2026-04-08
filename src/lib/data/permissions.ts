@@ -15,7 +15,12 @@ export async function loadPermissions(): Promise<PermissionsIndex> {
   if (cache) return cache;
   if (loading) return loading;
   loading = fetch("/data/permissions.json")
-    .then((r) => r.json())
+    .then((r) => {
+      if (!r.ok) {
+        throw new Error(`Failed to load permissions index: ${r.status} ${r.statusText}`);
+      }
+      return r.json();
+    })
     .then((data: PermissionsIndex) => {
       cache = data;
       return data;

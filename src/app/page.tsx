@@ -5,7 +5,9 @@ import { useState, useEffect, useRef } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { InteractionStatus } from "@azure/msal-browser";
 import { signIn, signOut } from "~/lib/auth/authUtils";
+import { type CloudEnvironment } from "~/lib/auth/msalConfig";
 import { ThemeToggle } from "~/components/theme-toggle";
+import { CloudEnvironmentDialog } from "./explorer/_components/cloud-environment-dialog";
 
 // ── Typewriter effect for the AI demo ──────────────────────
 
@@ -153,6 +155,17 @@ function NavAuthControls({
   isAuth: boolean;
   displayName: string | undefined;
 }): React.ReactNode {
+  const [showCloudDialog, setShowCloudDialog] = useState(false);
+
+  const handleCloudSelect = async (env: CloudEnvironment) => {
+    setShowCloudDialog(false);
+    try {
+      await signIn(env);
+    } catch (err) {
+      console.error("Sign in error:", err);
+    }
+  };
+
   if (isLoading) {
     return <span className="px-4 py-2 text-sm text-text-muted">Signing in...</span>;
   }
@@ -174,12 +187,19 @@ function NavAuthControls({
   }
 
   return (
-    <button
-      onClick={() => void signIn()}
-      className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
-    >
-      Sign In
-    </button>
+    <>
+      <button
+        onClick={() => setShowCloudDialog(true)}
+        className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
+      >
+        Sign In
+      </button>
+      <CloudEnvironmentDialog
+        open={showCloudDialog}
+        onCancel={() => setShowCloudDialog(false)}
+        onSelect={(env) => void handleCloudSelect(env)}
+      />
+    </>
   );
 }
 
