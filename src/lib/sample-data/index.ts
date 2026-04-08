@@ -225,7 +225,20 @@ function normaliseKey(method: string, url: string): string {
 }
 
 /**
+ * Extract the Graph base host from a full URL (e.g. "dod-graph.microsoft.us").
+ * Falls back to "graph.microsoft.com" if no known host is found.
+ */
+const GRAPH_HOST_RE =
+  /^https:\/\/(graph\.microsoft\.(?:com|us|de)|dod-graph\.microsoft\.us|microsoftgraph\.chinacloudapi\.cn)/;
+
+function extractGraphHost(url: string): string {
+  const m = url.match(GRAPH_HOST_RE);
+  return m ? m[1]! : "graph.microsoft.com";
+}
+
+/**
  * Look up a sample response for a given method + URL.
+ * Rewrites @odata.context URLs to match the selected cloud endpoint.
  * Returns a full GraphResponse or undefined if no sample exists.
  */
 export function getSampleResponse(method: string, url: string): GraphResponse | undefined {
@@ -233,7 +246,14 @@ export function getSampleResponse(method: string, url: string): GraphResponse | 
   const data = SAMPLE_RESPONSES[key];
   if (!data) return undefined;
 
-  const body = JSON.stringify(data, null, 2);
+  let body = JSON.stringify(data, null, 2);
+
+  // Rewrite hardcoded graph.microsoft.com to the actual cloud host
+  const host = extractGraphHost(url);
+  if (host !== "graph.microsoft.com") {
+    body = body.replaceAll("graph.microsoft.com", host);
+  }
+
   return {
     status: 200,
     statusText: "OK (Sample Data)",
