@@ -12,7 +12,7 @@ A power-user alternative to [Microsoft Graph Explorer](https://developer.microso
 
 ## Why This Exists
 
-The official Graph Explorer covers the basics. Graph Explorer Plus adds the features that power users have been asking for: 204 curated samples with deep Intune coverage, inline consent flows, 8-language code snippets, a browseable resource explorer, shareable query URLs, and sovereign cloud support that actually works end-to-end.
+The official Graph Explorer covers the basics. Graph Explorer Plus adds the features that power users have been asking for: 204 curated samples with deep Intune coverage, inline consent flows, 8-language code snippets, a browseable resource explorer, shareable query URLs, and sovereign cloud support.
 
 ## Features
 
