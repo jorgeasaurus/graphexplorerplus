@@ -43,7 +43,7 @@ const config = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' data:",
-              "connect-src 'self' https://login.microsoftonline.com https://login.microsoftonline.us https://login.microsoftonline.de https://login.chinacloudapi.cn https://graph.microsoft.com https://graph.microsoft.us https://dod-graph.microsoft.us https://graph.microsoft.de https://microsoftgraph.chinacloudapi.cn https://*.openai.azure.com https://va.vercel-scripts.com",
+              "connect-src 'self' https://login.microsoftonline.com https://login.microsoftonline.us https://login.microsoftonline.de https://login.chinacloudapi.cn https://graph.microsoft.com https://graph.microsoft.us https://dod-graph.microsoft.us https://graph.microsoft.de https://microsoftgraph.chinacloudapi.cn https://va.vercel-scripts.com",
               "frame-src https://login.microsoftonline.com https://login.microsoftonline.us https://login.microsoftonline.de https://login.chinacloudapi.cn",
               "frame-ancestors 'none'",
               "base-uri 'self'",

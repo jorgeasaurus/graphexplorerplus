@@ -5,7 +5,6 @@ import { useState, useEffect, useRef } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { InteractionStatus } from "@azure/msal-browser";
 import { signIn, signOut } from "~/lib/auth/authUtils";
-import { type CloudEnvironment } from "~/lib/auth/msalConfig";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { CloudEnvironmentDialog } from "./explorer/_components/cloud-environment-dialog";
 
@@ -157,10 +156,10 @@ function NavAuthControls({
 }): React.ReactNode {
   const [showCloudDialog, setShowCloudDialog] = useState(false);
 
-  const handleCloudSelect = async (env: CloudEnvironment) => {
+  const handleCloudSelect = async () => {
     setShowCloudDialog(false);
     try {
-      await signIn(env);
+      await signIn();
     } catch (err) {
       console.error("Sign in error:", err);
     }
@@ -197,7 +196,8 @@ function NavAuthControls({
       <CloudEnvironmentDialog
         open={showCloudDialog}
         onCancel={() => setShowCloudDialog(false)}
-        onSelect={(env) => void handleCloudSelect(env)}
+        onSelect={() => void handleCloudSelect()}
+        isAuthenticated={isAuth}
       />
     </>
   );

@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { isCloudConfigured, type CloudEnvironment } from "~/lib/auth/msalConfig";
+import { type CloudEnvironment } from "~/lib/auth/msalConfig";
 
 interface CloudEnvironmentDialogProps {
   open: boolean;
   onSelect: (environment: CloudEnvironment) => void;
   onCancel: () => void;
+  isAuthenticated: boolean;
 }
 
 const CLOUD_OPTIONS: {
@@ -70,7 +71,7 @@ const CLOUD_OPTIONS: {
   },
 ];
 
-export function CloudEnvironmentDialog({ open, onSelect, onCancel }: CloudEnvironmentDialogProps) {
+export function CloudEnvironmentDialog({ open, onSelect, onCancel, isAuthenticated }: CloudEnvironmentDialogProps) {
   const [selected, setSelected] = useState<CloudEnvironment>("global");
 
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -149,61 +150,65 @@ export function CloudEnvironmentDialog({ open, onSelect, onCancel }: CloudEnviro
 
         {/* Options */}
         <div className="px-4 py-4 space-y-2">
-          {CLOUD_OPTIONS.map((opt) => {
-            const configured = isCloudConfigured(opt.id);
-            return (
-              <button
-                key={opt.id}
-                onClick={() => setSelected(opt.id)}
-                className={`flex w-full items-start gap-3.5 rounded-xl border p-3.5 text-left transition-colors ${
-                  selected === opt.id
-                    ? "border-accent bg-accent/5"
+          {CLOUD_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setSelected(opt.id)}
+              disabled={isAuthenticated && opt.id !== "global"}
+              className={`flex w-full items-start gap-3.5 rounded-xl border p-3.5 text-left transition-colors ${
+                selected === opt.id
+                  ? "border-accent bg-accent/5"
+                  : isAuthenticated && opt.id !== "global"
+                    ? "border-border-subtle opacity-40 cursor-not-allowed"
                     : "border-border-subtle hover:border-border-default hover:bg-bg-hover"
-                }`}
-              >
-                {/* Radio indicator */}
-                <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                  selected === opt.id ? "border-accent" : "border-text-muted"
-                }`}>
-                  {selected === opt.id && (
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                  )}
-                </span>
+              }`}
+            >
+              {/* Radio indicator */}
+              <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                selected === opt.id ? "border-accent" : "border-text-muted"
+              }`}>
+                {selected === opt.id && (
+                  <span className="h-2 w-2 rounded-full bg-accent" />
+                )}
+              </span>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className={selected === opt.id ? "text-accent" : "text-text-muted"}>
-                      {opt.icon}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className={selected === opt.id ? "text-accent" : "text-text-muted"}>
+                    {opt.icon}
+                  </span>
+                  <span className={`text-sm font-medium ${
+                    selected === opt.id ? "text-text-primary" : "text-text-secondary"
+                  }`}>
+                    {opt.label}
+                  </span>
+                  {opt.id !== "global" && (
+                    <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-medium text-amber-500">
+                      Sample only
                     </span>
-                    <span className={`text-sm font-medium ${
-                      selected === opt.id ? "text-text-primary" : "text-text-secondary"
-                    }`}>
-                      {opt.label}
-                    </span>
-                    {!configured && (
-                      <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-medium text-amber-500">
-                        Not configured
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-0.5 text-[11px] text-text-muted leading-relaxed">
-                    {opt.description}
-                  </p>
+                  )}
                 </div>
-              </button>
-            );
-          })}
+                <p className="mt-0.5 text-[11px] text-text-muted leading-relaxed">
+                  {opt.description}
+                </p>
+              </div>
+            </button>
+          ))}
         </div>
 
-        {/* Not-configured notice */}
-        {!isCloudConfigured(selected) && selected !== "global" && (
+        {/* Info notice for non-commercial clouds */}
+        {selected !== "global" && (
           <div className="mx-4 mb-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-2.5">
             <p className="text-[11px] leading-relaxed text-amber-500/90">
-              This cloud requires a separate app registration. Create one at the corresponding Azure portal and set{" "}
-              <code className="rounded bg-amber-500/10 px-1 py-0.5 font-mono text-[10px]">
-                NEXT_PUBLIC_MSAL_CLIENT_ID_{selected.toUpperCase()}
-              </code>{" "}
-              in your environment variables.
+              <strong>Sample mode:</strong> Non-commercial clouds are available for browsing sample queries and viewing example responses. Sign-in and live API calls require the commercial (Global) cloud.
+            </p>
+          </div>
+        )}
+
+        {isAuthenticated && selected !== "global" && (
+          <div className="mx-4 mb-2 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-2.5">
+            <p className="text-[11px] leading-relaxed text-red-400">
+              You are currently signed in. Sign out first to switch to a sample cloud environment.
             </p>
           </div>
         )}
@@ -218,16 +223,22 @@ export function CloudEnvironmentDialog({ open, onSelect, onCancel }: CloudEnviro
           </button>
           <button
             onClick={handleContinue}
-            className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent/90"
+            disabled={isAuthenticated && selected !== "global"}
+            className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {/* Microsoft logo */}
-            <svg width="14" height="14" viewBox="0 0 21 21" fill="none" aria-hidden="true">
-              <rect x="1" y="1" width="9" height="9" fill="#f25022" />
-              <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
-              <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
-              <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
-            </svg>
-            Continue to Sign In
+            {selected === "global" ? (
+              <>
+                <svg width="14" height="14" viewBox="0 0 21 21" fill="none" aria-hidden="true">
+                  <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+                  <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+                  <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+                  <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+                </svg>
+                Select
+              </>
+            ) : (
+              "Browse Samples"
+            )}
           </button>
         </div>
       </div>

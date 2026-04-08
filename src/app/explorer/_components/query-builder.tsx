@@ -12,6 +12,7 @@ import {
   searchEndpoints,
   type EndpointEntry,
 } from "~/lib/data/endpoints";
+import { getSampleResponse } from "~/lib/sample-data";
 import { PermissionInspector } from "./permission-inspector";
 import { ModifyPermissions } from "./modify-permissions";
 import { AccessTokenViewer } from "./access-token-viewer";
@@ -278,6 +279,17 @@ export default function QueryBuilder({
     setGraphBase(newBase);
   }, [authenticated]);
 
+  // Re-sync when cloud environment changes (sample mode)
+  useEffect(() => {
+    const handler = () => {
+      const newBase = getGraphEndpoint(getSelectedCloudEnvironment());
+      setGraphBase(newBase);
+      setUrl((prev) => prev.replace(/^https:\/\/[^/]+/, newBase));
+    };
+    window.addEventListener("cloud-environment-changed", handler);
+    return () => window.removeEventListener("cloud-environment-changed", handler);
+  }, []);
+
   const [method, setMethod] = useState<HttpMethod>("GET");
   const [url, setUrl] = useState(`${graphBase}/v1.0/me`);
   const [apiVersion, setApiVersion] = useState<ApiVersion>("v1.0");
@@ -468,6 +480,14 @@ export default function QueryBuilder({
 
   const handleSend = useCallback(async () => {
     if (!authenticated) {
+      // Try sample data before rejecting
+      const sample = getSampleResponse(method, url);
+      if (sample) {
+        onRequest?.({ method, url });
+        onResponse?.(sample);
+        addHistoryEntry({ method, url, status: sample.status, timeMs: 0 });
+        return;
+      }
       setAuthWarning(true);
       setTimeout(() => setAuthWarning(false), 2000);
       return;

@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef } from "react";
 import QueryBuilder from "./_components/query-builder";
 import { ResponseViewer } from "./_components/response-viewer";
-import { NLQueryBar } from "./_components/nl-query-bar";
 import type { GraphResponse } from "~/lib/graph/client";
 
 export default function ExplorerPage() {
@@ -16,10 +15,6 @@ export default function ExplorerPage() {
 
   const handleRetry = useCallback(() => {
     sendRef.current?.();
-  }, []);
-
-  const handleNLQuery = useCallback((query: { method: string; url: string; body?: string }) => {
-    window.dispatchEvent(new CustomEvent("select-query", { detail: { ...query, autoSend: true } }));
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -51,11 +46,6 @@ export default function ExplorerPage() {
 
   return (
     <div ref={containerRef} className="flex min-h-0 flex-1 flex-col gap-0">
-      {/* AI Query Bar */}
-      <div className="mb-2">
-        <NLQueryBar onQueryGenerated={handleNLQuery} />
-      </div>
-
       {/* Request Panel */}
       <div
         className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border-default bg-bg-surface"

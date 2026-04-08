@@ -3,7 +3,7 @@
 import { type ReactNode, useState, useEffect } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { InteractionStatus } from "@azure/msal-browser";
-import { signIn, signOut, getSelectedCloudEnvironment, loadCloudEnvironmentFromSession } from "~/lib/auth/authUtils";
+import { signIn, signOut, getSelectedCloudEnvironment, setSelectedCloudEnvironment, loadCloudEnvironmentFromSession } from "~/lib/auth/authUtils";
 import { type CloudEnvironment } from "~/lib/auth/msalConfig";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { CloudEnvironmentDialog } from "./cloud-environment-dialog";
@@ -39,25 +39,27 @@ export function HeaderBar() {
     setCloudEnv(loadCloudEnvironmentFromSession());
   }, []);
 
-  // Sync cloud env state after auth completes
   useEffect(() => {
     if (isAuth) {
       setCloudEnv(getSelectedCloudEnvironment());
     }
   }, [isAuth]);
 
-  const handleSignInClick = () => {
-    setShowCloudDialog(true);
-  };
-
-  const handleCloudSelect = async (env: CloudEnvironment) => {
-    setShowCloudDialog(false);
+  const handleSignInClick = async () => {
     try {
-      await signIn(env);
-      setCloudEnv(env);
+      await signIn();
+      setCloudEnv("global");
     } catch (err) {
       console.error("Sign in error:", err);
     }
+  };
+
+  const handleCloudSelect = (env: CloudEnvironment) => {
+    setShowCloudDialog(false);
+    setSelectedCloudEnvironment(env);
+    setCloudEnv(env);
+    // Dispatch event so sample queries re-render with new base URL
+    window.dispatchEvent(new Event("cloud-environment-changed"));
   };
 
   let authContent: ReactNode;
@@ -80,7 +82,7 @@ export function HeaderBar() {
   } else {
     authContent = (
       <button
-        onClick={handleSignInClick}
+        onClick={() => void handleSignInClick()}
         className="flex h-9 items-center gap-2 rounded-lg bg-accent/10 px-4 text-xs font-semibold text-accent transition-colors hover:bg-accent/20"
       >
         Sign In
@@ -100,15 +102,21 @@ export function HeaderBar() {
         <div className="flex-1" />
 
         <div className="flex items-center gap-1">
-          {/* Cloud environment badge (read-only, shows connected cloud) */}
-          {isAuth && (
-            <div className="flex items-center gap-1.5 rounded-lg bg-accent/5 px-3 py-1.5 border border-accent/15">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-accent">
-                {CLOUD_LABELS[cloudEnv]}
-              </span>
-            </div>
-          )}
+          {/* Cloud environment selector */}
+          <button
+            onClick={() => setShowCloudDialog(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-accent/5 px-3 py-1.5 border border-accent/15 transition-colors hover:bg-accent/10"
+            title="Select cloud environment"
+          >
+            {isAuth && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+            {!isAuth && cloudEnv !== "global" && <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />}
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-accent">
+              {CLOUD_LABELS[cloudEnv]}
+            </span>
+            {!isAuth && cloudEnv !== "global" && (
+              <span className="text-[9px] text-amber-400 font-medium">(Sample)</span>
+            )}
+          </button>
 
           <ThemeToggle />
 
@@ -120,8 +128,9 @@ export function HeaderBar() {
 
       <CloudEnvironmentDialog
         open={showCloudDialog}
-        onSelect={(env) => void handleCloudSelect(env)}
+        onSelect={handleCloudSelect}
         onCancel={() => setShowCloudDialog(false)}
+        isAuthenticated={isAuth}
       />
     </>
   );

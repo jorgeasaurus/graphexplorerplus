@@ -484,9 +484,20 @@ export function ResponseViewer({
   }
 
   const { badge, text } = statusColorClasses(response.status);
+  const isSampleData = response.headers["x-sample-data"] === "true";
 
   return (
     <div className="flex h-full flex-col">
+      {/* Sample Data Banner */}
+      {isSampleData && (
+        <div className="flex items-center gap-2 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2">
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span className="text-xs font-medium text-amber-300">Sample Data</span>
+          <span className="text-xs text-amber-300/70">— Sign in to see live results from your tenant</span>
+        </div>
+      )}
       {/* Status / Meta Bar */}
       <div className="flex h-10 items-center gap-3 border-b border-border-subtle px-4">
         <span className={`inline-flex items-center rounded-full px-2.5 py-1 font-mono text-xs font-medium ${badge} ${text}`}>
