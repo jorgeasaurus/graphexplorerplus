@@ -6,6 +6,7 @@ import { ConsentBanner } from "./consent-banner";
 import { CopyButton } from "~/components/copy-button";
 import { SkeletonBlock } from "~/components/skeleton";
 import { createPortal } from "react-dom";
+import { createGraphClient } from "~/lib/graph/client";
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -230,6 +231,75 @@ function BoltIcon() {
 }
 
 // ── Sub-components ─────────────────────────────────────────
+
+function ReportDownloadBanner({ request }: { request: RequestInfo }) {
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleDownload = useCallback(async () => {
+    setDownloading(true);
+    setError(null);
+    try {
+      const client = createGraphClient();
+      const { blob, filename } = await client.executeDownloadRequest({
+        method: request.method as "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
+        url: request.url,
+        headers: request.headers,
+        body: request.body,
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Download failed");
+    } finally {
+      setDownloading(false);
+    }
+  }, [request]);
+
+  return (
+    <div className="flex flex-col gap-2 border-b border-info/20 bg-info/5 px-4 py-3">
+      <div className="flex items-center gap-2">
+        <DownloadIcon />
+        <span className="text-xs font-medium text-info">Report Download Available</span>
+      </div>
+      <p className="text-xs text-text-secondary">
+        This endpoint returns a downloadable report via redirect. Click below to download the file directly.
+      </p>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => void handleDownload()}
+          disabled={downloading}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-bg-deep transition-colors hover:bg-accent-hover disabled:opacity-70"
+        >
+          {downloading ? (
+            <>
+              <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+              Downloading…
+            </>
+          ) : (
+            <>
+              <DownloadIcon />
+              Download Report
+            </>
+          )}
+        </button>
+        {error && (
+          <span className="text-xs text-error">{error}</span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function EmptyState() {
   return (
@@ -528,6 +598,11 @@ export function ResponseViewer({
           url={request.url}
           onRetry={onRetry}
         />
+      )}
+
+      {/* ── Report Download Banner (302 redirects) ─────── */}
+      {response.status >= 300 && response.status < 400 && !isSampleData && request && (
+        <ReportDownloadBanner request={request} />
       )}
 
       {/* Tab Bar */}
