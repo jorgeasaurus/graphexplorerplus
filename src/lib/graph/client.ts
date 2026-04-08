@@ -178,55 +178,6 @@ export class GraphClient {
     };
   }
 
-  /**
-   * Re-issue a Graph request with redirect: "follow" to download the actual
-   * report content. Reports endpoints return 302 → pre-signed URL; the browser
-   * strips the Authorization header on cross-origin redirect so this is safe.
-   */
-  async executeDownloadRequest(options: GraphRequestOptions): Promise<{ blob: Blob; filename: string }> {
-    const { method, url, headers: customHeaders, body, scopes } = options;
-
-    const fullUrl = url.startsWith("http") ? url : `${this.baseUrl}${url.startsWith("/") ? "" : "/"}${url}`;
-    const headers = await this.getHeaders(customHeaders, scopes);
-
-    const fetchOptions: RequestInit = {
-      method,
-      headers,
-      redirect: "follow",
-    };
-    if (body && method !== "GET" && method !== "DELETE") {
-      fetchOptions.body = body;
-    }
-
-    const response = await fetch(fullUrl, fetchOptions);
-    const blob = await response.blob();
-    const contentDisposition = response.headers.get("content-disposition") ?? "";
-    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=["']?([^"';\n]+)/);
-
-    // Derive filename from content-disposition, URL path, or fallback
-    let filename = filenameMatch?.[1]?.trim() ?? "";
-    if (!filename) {
-      const pathSegment = url.split("?")[0]?.split("/").pop() ?? "report";
-      filename = pathSegment.replace(/[^a-zA-Z0-9_-]/g, "_");
-    }
-
-    // Append extension based on content type
-    const contentType = response.headers.get("content-type") ?? "";
-    if (!filename.includes(".")) {
-      if (contentType.includes("csv") || contentType.includes("text/plain")) {
-        filename += ".csv";
-      } else if (contentType.includes("json")) {
-        filename += ".json";
-      } else if (contentType.includes("zip")) {
-        filename += ".zip";
-      } else {
-        filename += ".csv"; // Graph reports default to CSV
-      }
-    }
-
-    return { blob, filename };
-  }
-
   // Convenience methods
 
   async get(endpoint: string, scopes?: string[]): Promise<GraphResponse> {

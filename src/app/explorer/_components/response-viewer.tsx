@@ -6,7 +6,6 @@ import { ConsentBanner } from "./consent-banner";
 import { CopyButton } from "~/components/copy-button";
 import { SkeletonBlock } from "~/components/skeleton";
 import { createPortal } from "react-dom";
-import { createGraphClient } from "~/lib/graph/client";
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -240,13 +239,38 @@ function ReportDownloadBanner({ request }: { request: RequestInfo }) {
     setDownloading(true);
     setError(null);
     try {
-      const client = createGraphClient();
-      const { blob, filename } = await client.executeDownloadRequest({
-        method: request.method as "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
-        url: request.url,
-        headers: request.headers,
-        body: request.body,
+      // Get a fresh token for the request
+      const { getAccessToken } = await import("~/lib/auth/authUtils");
+      const token = await getAccessToken();
+
+      // Proxy through our API route to avoid CORS issues with *.office.com
+      const res = await fetch("/api/report-download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: request.url, token }),
       });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => null) as { error?: string } | null;
+        throw new Error(errBody?.error ?? `Download failed (${res.status})`);
+      }
+
+      const blob = await res.blob();
+      const contentDisposition = res.headers.get("content-disposition") ?? "";
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=["']?([^"';\n]+)/);
+
+      let filename = filenameMatch?.[1]?.trim() ?? "";
+      if (!filename) {
+        const pathSegment = request.url.split("?")[0]?.split("/").pop() ?? "report";
+        filename = pathSegment.replace(/[^a-zA-Z0-9_()-]/g, "_");
+      }
+      if (!filename.includes(".")) {
+        const ct = res.headers.get("content-type") ?? "";
+        if (ct.includes("csv") || ct.includes("text/plain")) filename += ".csv";
+        else if (ct.includes("json")) filename += ".json";
+        else if (ct.includes("zip")) filename += ".zip";
+        else filename += ".csv";
+      }
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
