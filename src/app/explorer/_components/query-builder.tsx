@@ -557,7 +557,7 @@ export default function QueryBuilder({
           <button
             onClick={() => setDropdownOpen((o) => !o)}
             aria-haspopup="listbox"
-            aria-expanded={dropdownOpen}
+            aria-expanded={dropdownOpen ? "true" : "false"}
             aria-label={`HTTP method: ${method}`}
             className={`flex h-9 items-center gap-1.5 rounded-lg px-3 font-mono text-xs font-bold tracking-wide transition-colors ${style.text} ${style.bg} hover:brightness-125`}
           >
@@ -630,7 +630,7 @@ export default function QueryBuilder({
             name="url"
             className="h-9 w-full rounded-lg border border-border-default bg-bg-elevated px-3 font-mono text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50"
             role="combobox"
-            aria-expanded={showSuggestions}
+            aria-expanded={showSuggestions ? "true" : "false"}
             aria-autocomplete="list"
             aria-controls={`${uid}-suggestions`}
             aria-activedescendant={
