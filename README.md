@@ -1,16 +1,14 @@
 # Graph Explorer Plus
 
-A power-user alternative to [Microsoft Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer) built with the T3 stack. Designed for IT admins, security engineers, and developers who live in the Graph API daily.
+**[graphexplorerplus.vercel.app](https://graphexplorerplus.vercel.app)**
+
+A power-user alternative to [Microsoft Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer) built with Next.js. Designed for IT admins, security engineers, and developers who live in the Graph API daily.
 
 ## Why This Exists
 
-The official Graph Explorer covers the basics. Graph Explorer Plus adds the features that power users have been asking for: AI-powered natural language queries, 201 curated samples with deep Intune coverage, inline consent flows, 8-language code snippets, a browseable resource explorer, shareable query URLs, and sovereign cloud support that actually works end-to-end.
+The official Graph Explorer covers the basics. Graph Explorer Plus adds the features that power users have been asking for: 204 curated samples with deep Intune coverage, inline consent flows, 8-language code snippets, a browseable resource explorer, shareable query URLs, and sovereign cloud support that actually works end-to-end.
 
 ## Features
-
-### AI Query Builder
-
-Describe what you need in plain English. The AI translates it to the correct Graph API call with proper OData filters, query parameters, and request bodies. Powered by Azure OpenAI with context-aware prompt engineering that understands Intune resource type casting, OData filter syntax, and Graph API conventions.
 
 ### Code Snippets (8 Languages)
 
@@ -44,7 +42,7 @@ Full support for 5 sovereign cloud environments. The URL bar, autocomplete, samp
 | Germany | `graph.microsoft.de` |
 | China (21Vianet) | `microsoftgraph.chinacloudapi.cn` |
 
-### 201 Sample Queries (25 Categories)
+### 204 Sample Queries (25 Categories)
 
 **General:** Getting Started, Users, Groups, Mail, Calendar, Teams, OneDrive/SharePoint, Planner/Tasks, App Registrations, Entra ID, Directory Roles, Security, Reports, Subscriptions
 
@@ -70,10 +68,9 @@ All queries are persisted to localStorage. Click any history entry to reload it.
 
 | Capability | Official | Plus |
 |---|---|---|
-| AI natural language queries | No | Yes |
 | Code snippets | 4 languages (server-rendered) | 8 languages (client-side, with SDK links) |
 | Resource explorer | Yes | Yes (tree + search + method badges) |
-| Sample queries | ~40 | 201 across 25 categories |
+| Sample queries | ~40 | 204 across 25 categories |
 | Intune coverage | Minimal | 11 dedicated categories |
 | Inline consent flow | No | Yes (consent & retry) |
 | Modify permissions | Yes | Yes (with greyed-out granted state) |
@@ -110,14 +107,6 @@ NEXT_PUBLIC_MSAL_AUTHORITY=https://login.microsoftonline.com/common
 NEXT_PUBLIC_MSAL_REDIRECT_URI=http://localhost:3000
 ```
 
-For the AI query builder, add your Azure OpenAI credentials:
-
-```
-NEXT_PUBLIC_AZURE_OPENAI_ENDPOINT=<your-endpoint>
-NEXT_PUBLIC_AZURE_OPENAI_KEY=<your-key>
-NEXT_PUBLIC_AZURE_OPENAI_DEPLOYMENT=<your-deployment-name>
-```
-
 ### 3. Run
 
 ```bash
@@ -133,32 +122,43 @@ Open [http://localhost:3000](http://localhost:3000), sign in, and start querying
 src/
   app/
     page.tsx              # Landing page
+    api/
+      report-download/
+        route.ts          # Server proxy for Graph Reports (CORS workaround)
     explorer/
       page.tsx            # Explorer layout
       _components/
-        query-builder.tsx     # URL bar, method selector, headers/body/params tabs
-        response-viewer.tsx   # Response body, headers, fullscreen expand
-        nl-query-bar.tsx      # AI natural language input
-        code-snippets.tsx     # 8-language snippet generator
-        resource-explorer.tsx # 27K endpoint tree browser
-        sidebar.tsx           # Samples / Resources / History tabs
-        sample-queries.tsx    # 201 curated queries
-        history-panel.tsx     # Persistent request history
-        permission-inspector.tsx  # Scope requirements per endpoint
-        modify-permissions.tsx    # Browse and consent to permissions
-        access-token-viewer.tsx   # JWT token decoder
-        consent-banner.tsx    # 403 consent flow
-        header-bar.tsx        # App header, theme toggle, cloud switcher
-        status-bar.tsx        # Response status bar
+        query-builder.tsx           # URL bar, method selector, headers/body/params tabs
+        response-viewer.tsx         # Response body, headers, fullscreen expand
+        code-snippets.tsx           # 8-language snippet generator
+        resource-explorer.tsx       # 27K endpoint tree browser
+        sidebar.tsx                 # Samples / Resources / History tabs
+        sample-queries.tsx          # 204 curated queries
+        history-panel.tsx           # Persistent request history
+        permission-inspector.tsx    # Scope requirements per endpoint
+        modify-permissions.tsx      # Browse and consent to permissions
+        access-token-viewer.tsx     # JWT token decoder
+        consent-banner.tsx          # 403 consent flow
+        cloud-environment-dialog.tsx # Sovereign cloud switcher dialog
+        header-bar.tsx              # App header, theme toggle, cloud switcher
+        status-bar.tsx              # Response status bar
   lib/
     auth/
       msalConfig.ts       # MSAL configuration, cloud environments
-      authUtils.ts         # Token acquisition helpers
-    ai/
-      azure-openai.ts     # AI system prompt and API integration
+      authUtils.ts        # Token acquisition helpers
+      jwt-utils.ts        # JWT decoding utilities
+    graph/
+      client.ts           # Graph API client
+      url-utils.ts        # URL parsing and manipulation
+      method-styles.ts    # HTTP method styling
+    data/
+      endpoints.ts        # Endpoint metadata
+      permissions.ts      # Permission definitions
+    history-store.ts      # localStorage history persistence
+    theme-store.ts        # Theme preference persistence
 ```
 
-All authentication and API calls happen client-side. The Next.js server only serves static assets.
+Authentication and most API calls happen client-side via MSAL.js. The Next.js server provides a single API route (`/api/report-download`) that proxies Graph Reports downloads to work around CORS restrictions on redirect URLs.
 
 ## Tech Stack
 
