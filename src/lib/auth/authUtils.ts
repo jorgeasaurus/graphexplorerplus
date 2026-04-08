@@ -3,6 +3,9 @@ import { msalInstance, loginRequest, getAuthorityUrl, CLOUD_ENVIRONMENTS, type C
 
 let selectedCloudEnvironment: CloudEnvironment = "global";
 
+// Track incrementally consented scopes so subsequent token requests include them
+const consentedScopes = new Set<string>();
+
 export function getSelectedCloudEnvironment(): CloudEnvironment {
   return selectedCloudEnvironment;
 }
@@ -41,8 +44,13 @@ export async function getAccessToken(scopes?: string[]): Promise<string> {
   if (!account) throw new AuthSessionExpiredError();
 
   const authority = getAuthorityUrl(selectedCloudEnvironment, account.tenantId);
+  // Merge default scopes with any incrementally consented scopes
+  const mergedScopes = Array.from(new Set([
+    ...(scopes || loginRequest.scopes),
+    ...consentedScopes,
+  ]));
   const tokenRequest = {
-    scopes: scopes || loginRequest.scopes,
+    scopes: mergedScopes,
     account,
     authority,
   };
@@ -54,7 +62,7 @@ export async function getAccessToken(scopes?: string[]): Promise<string> {
     if (error instanceof InteractionRequiredAuthError || error instanceof BrowserAuthError) {
       try {
         const response = await msalInstance.acquireTokenPopup({
-          scopes: scopes || loginRequest.scopes,
+          scopes: mergedScopes,
           authority,
         });
         return response.accessToken;
@@ -80,6 +88,10 @@ export async function consentToScopes(scopes: string[]): Promise<string> {
     authority,
     prompt: "consent",
   });
+
+  // Remember these scopes so future acquireTokenSilent requests include them
+  for (const s of scopes) consentedScopes.add(s);
+
   return response.accessToken;
 }
 
@@ -102,6 +114,7 @@ export async function signOut(): Promise<void> {
   if (account) {
     await msalInstance.logoutPopup({ account });
   }
+  consentedScopes.clear();
 }
 
 export function isAuthenticated(): boolean {
