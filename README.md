@@ -4,6 +4,12 @@
 
 A power-user alternative to [Microsoft Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer) built with Next.js. Designed for IT admins, security engineers, and developers who live in the Graph API daily.
 
+## Screenshots
+
+![Landing Page](docs/screenshots/landing-page.png)
+
+![Explorer](docs/screenshots/explorer.png)
+
 ## Why This Exists
 
 The official Graph Explorer covers the basics. Graph Explorer Plus adds the features that power users have been asking for: 204 curated samples with deep Intune coverage, inline consent flows, 8-language code snippets, a browseable resource explorer, shareable query URLs, and sovereign cloud support that actually works end-to-end.
