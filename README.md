@@ -36,9 +36,9 @@ Browse and consent to individual Microsoft Graph permissions directly from the e
 
 Decode your current access token in real time. Inspect claims, expiration, scopes, and tenant info without leaving the app.
 
-### Multi-Cloud Support
+### Sovereign Cloud Endpoints
 
-Full support for 5 sovereign cloud environments. The URL bar, autocomplete, sample queries, and MSAL authority all switch together.
+Switch between 5 Graph API environments. The URL bar, autocomplete, sample queries, and MSAL authority update together. Sovereign cloud access still requires an app registration and tenant in that cloud — this feature only switches the endpoints the explorer targets.
 
 | Environment | Graph Endpoint |
 |---|---|
@@ -83,7 +83,7 @@ All queries are persisted to localStorage. Click any history entry to reload it.
 | Token viewer | No | Yes (JWT decode) |
 | Shareable query URLs | Yes | Yes |
 | Fullscreen response | No | Yes (portal modal) |
-| Multi-cloud | Partial | Full (auth + endpoints + samples) |
+| Sovereign cloud endpoints | Partial | 5 environments (endpoint switching) |
 | Persistent history | Session only | localStorage with search |
 | Draggable panels | No | Yes |
 | PowerShell-first | Listed last | Default tab |
