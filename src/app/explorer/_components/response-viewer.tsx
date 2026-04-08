@@ -342,6 +342,9 @@ function isDataUrl(body: string): boolean {
   return body.startsWith("data:");
 }
 
+const SAFE_DOWNLOAD_MIME_RE =
+  /^(image|audio|video|text\/(plain|csv|xml|tab-separated-values)|application\/(json|xml|pdf|zip|gzip|x-gzip|octet-stream|vnd\.))/;
+
 function isImageDataUrl(body: string): boolean {
   return body.startsWith("data:image/");
 }
@@ -386,6 +389,7 @@ function BodyTab({ body }: { body: string }) {
 
   if (isDataUrl(body)) {
     const mime = body.match(/^data:([^;]+)/)?.[1] ?? "binary";
+    const isSafe = SAFE_DOWNLOAD_MIME_RE.test(mime);
     return (
       <div className="flex flex-1 items-center justify-center py-16">
         <div className="flex flex-col items-center gap-2">
@@ -393,13 +397,19 @@ function BodyTab({ body }: { body: string }) {
           <p className="text-xs text-text-muted">
             Binary response ({mime})
           </p>
-          <a
-            href={body}
-            download={`response.${mime.split("/")[1] ?? "bin"}`}
-            className="mt-2 rounded bg-accent/10 px-3 py-1 text-xs text-accent transition-colors hover:bg-accent/20"
-          >
-            Download
-          </a>
+          {isSafe ? (
+            <a
+              href={body}
+              download={`response.${mime.split("/")[1] ?? "bin"}`}
+              className="mt-2 rounded bg-accent/10 px-3 py-1 text-xs text-accent transition-colors hover:bg-accent/20"
+            >
+              Download
+            </a>
+          ) : (
+            <p className="mt-2 text-xs text-warning">
+              Download blocked — unsupported MIME type
+            </p>
+          )}
         </div>
       </div>
     );

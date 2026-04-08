@@ -337,7 +337,13 @@ export default function QueryBuilder({
     const v = searchParams.get("v");
     const b = searchParams.get("b");
     if (m && METHODS.includes(m as HttpMethod)) setMethod(m as HttpMethod);
-    if (u) setUrl(u);
+    if (u) {
+      // Only accept URLs targeting known Graph hosts or relative paths
+      const isGraphUrl =
+        /^https?:\/\/(?:graph\.microsoft\.(?:com|us|de)|dod-graph\.microsoft\.us|microsoftgraph\.chinacloudapi\.cn)\//i.test(u) ||
+        (u.startsWith("/") && !u.startsWith("//"));
+      if (isGraphUrl) setUrl(u);
+    }
     if (v && (v === "v1.0" || v === "beta")) setApiVersion(v);
     if (b) { setBody(b); setActiveTab("body"); }
     if (m || u) {
@@ -683,7 +689,7 @@ export default function QueryBuilder({
             shareUrl.searchParams.set("m", method);
             shareUrl.searchParams.set("u", url);
             shareUrl.searchParams.set("v", apiVersion);
-            if (body && BODY_METHODS.includes(method)) shareUrl.searchParams.set("b", body);
+            // Body intentionally excluded — may contain secrets/PII
             navigator.clipboard.writeText(shareUrl.toString()).catch(() => {});
             setShareCopied(true);
             setTimeout(() => setShareCopied(false), 1500);

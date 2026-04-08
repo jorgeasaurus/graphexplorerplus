@@ -47,14 +47,36 @@ function extractApiPath(url: string): { version: string; path: string } {
   return { version: "v1.0", path: url.startsWith("/") ? url : `/${url}` };
 }
 
+// Escape helpers to prevent code injection in generated snippets
+function escDoubleQuote(s: string): string {
+  return s.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n").replace(/\r/g, "\\r");
+}
+function escCSharpVerbatim(s: string): string {
+  return s.replace(/"/g, '""');
+}
+function escSingleQuote(s: string): string {
+  return s.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+function escGoBacktick(s: string): string {
+  // Go raw strings can't contain backticks — use double-quote concatenation
+  return s.includes("`") ? s.replace(/`/g, "` + \"`\" + `") : s;
+}
+function escPowerShell(s: string): string {
+  return s.replace(/"/g, '`"').replace(/\$/g, "`$");
+}
+function escShell(s: string): string {
+  return s.replace(/'/g, "'\\''");
+}
+
 function generateJavaScript(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
   const { path } = extractApiPath(url);
+  const safePath = escDoubleQuote(path);
   const methodLower = method.toLowerCase();
 
   const bodyArg = body ? `${body}` : "";
   const callChain = body
-    ? `.api("${path}")\n  .${methodLower}(${bodyArg})`
-    : `.api("${path}")\n  .${methodLower}()`;
+    ? `.api("${safePath}")\n  .${methodLower}(${bodyArg})`
+    : `.api("${safePath}")\n  .${methodLower}()`;
 
   return `import { Client } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider }
@@ -80,6 +102,7 @@ console.log(JSON.stringify(result, null, 2));`;
 
 function generateCSharp(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
   const { path } = extractApiPath(url);
+  const safePath = escDoubleQuote(path);
   const methodMap: Record<string, string> = {
     GET: "GetAsync", POST: "PostAsync", PUT: "PutAsync", PATCH: "PatchAsync", DELETE: "DeleteAsync",
   };
@@ -87,7 +110,7 @@ function generateCSharp(method: string, url: string, _headers?: Record<string, s
 
   const bodyBlock = body
     ? `\nvar requestBody = new StringContent(
-    @"${body.replace(/"/g, '""')}",
+    @"${escCSharpVerbatim(body)}",
     Encoding.UTF8,
     "application/json");\n`
     : "";
@@ -98,7 +121,7 @@ function generateCSharp(method: string, url: string, _headers?: Record<string, s
         new RequestInformation
         {
             HttpMethod = Method.${method},
-            UrlTemplate = "{+baseurl}${path}",
+            UrlTemplate = "{+baseurl}${safePath}",
             Content = requestBody,
         });`
     : `var response = await graphClient.RequestAdapter
@@ -106,7 +129,7 @@ function generateCSharp(method: string, url: string, _headers?: Record<string, s
         new RequestInformation
         {
             HttpMethod = Method.${method},
-            UrlTemplate = "{+baseurl}${path}",
+            UrlTemplate = "{+baseurl}${safePath}",
         });`;
 
   return `using Microsoft.Graph;
@@ -129,6 +152,7 @@ Console.WriteLine(await reader.ReadToEndAsync());`;
 
 function generatePython(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
   const { path } = extractApiPath(url);
+  const safePath = escDoubleQuote(path);
   const methodLower = method.toLowerCase();
 
   const bodyBlock = body
@@ -153,7 +177,7 @@ ${bodyBlock}
 response = await client.request_adapter.send_primitive_async(
     request_info=client.request_adapter.create_request_information(
         method="${methodLower}",
-        url_template="{+baseurl}${path}"${bodyArg}
+        url_template="{+baseurl}${safePath}"${bodyArg}
     ),
     response_type=bytes
 )
@@ -164,6 +188,7 @@ print(response.decode("utf-8"))`;
 function generatePowerShell(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
   const { version, path } = extractApiPath(url);
   const uri = "/" + version + path;
+  const safeUri = escPowerShell(uri);
   const scope = guessScope(path);
 
   const lines: string[] = [
@@ -182,7 +207,7 @@ function generatePowerShell(method: string, url: string, _headers?: Record<strin
   }
 
   lines.push("Invoke-MgGraphRequest `");
-  lines.push('    -Uri "' + uri + '" `');
+  lines.push('    -Uri "' + safeUri + '" `');
 
   if (body) {
     lines.push("    -Method " + method + " `");
@@ -221,6 +246,7 @@ function guessScope(path: string): string {
 
 function generateGo(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
   const { path } = extractApiPath(url);
+  const safePath = escDoubleQuote(path);
 
   const imports = body
     ? `\t"context"
@@ -238,7 +264,7 @@ function generateGo(method: string, url: string, _headers?: Record<string, strin
 \tabstractions "github.com/microsoft/kiota-abstractions-go"`;
 
   const bodySetup = body
-    ? `\n\treqBody := strings.NewReader(\`${body}\`)\n`
+    ? `\n\treqBody := strings.NewReader(\`${escGoBacktick(body)}\`)\n`
     : "";
 
   return `package main
@@ -259,7 +285,7 @@ func main() {
 ${bodySetup}
 \treqInfo := abstractions.NewRequestInformation()
 \treqInfo.Method = abstractions.${method}
-\treqInfo.UrlTemplate = "{+baseurl}${path}"
+\treqInfo.UrlTemplate = "{+baseurl}${safePath}"
 
 \tresult, _ := client.RequestAdapter().SendPrimitive(
 \t\tcontext.Background(), reqInfo, "string", nil,
@@ -271,10 +297,11 @@ ${bodySetup}
 
 function generateJava(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
   const { path } = extractApiPath(url);
+  const safePath = escDoubleQuote(path);
   const methodUpper = method.toUpperCase();
 
   const bodyBlock = body
-    ? `\nString requestBody = "${body.replace(/"/g, '\\"').replace(/\n/g, "\\n")}";\n`
+    ? `\nString requestBody = "${escDoubleQuote(body)}";\n`
     : "";
 
   const bodyArg = body ? ", requestBody" : "";
@@ -294,7 +321,7 @@ GraphServiceClient graphClient = new GraphServiceClient(credential, scopes);
 ${bodyBlock}
 RequestInformation requestInfo = new RequestInformation();
 requestInfo.httpMethod = HttpMethod.${methodUpper};
-requestInfo.urlTemplate = "{+baseurl}${path}";
+requestInfo.urlTemplate = "{+baseurl}${safePath}";
 
 var result = graphClient.getRequestAdapter()
     .sendPrimitive(requestInfo, null, String.class${bodyArg});
@@ -304,10 +331,11 @@ System.out.println(result);`;
 
 function generatePhp(method: string, url: string, _headers?: Record<string, string>, body?: string): string {
   const { path } = extractApiPath(url);
+  const safePath = escSingleQuote(path);
   const methodLower = method.toLowerCase();
 
   const bodyBlock = body
-    ? `\n$body = json_decode('${body.replace(/'/g, "\\'")}', true);\n`
+    ? `\n$body = json_decode('${escSingleQuote(body)}', true);\n`
     : "";
 
   const bodyArg = body ? ", $body" : "";
@@ -328,7 +356,7 @@ $graphClient = new GraphServiceClient($authProvider);
 ${bodyBlock}
 $requestInfo = new \\Microsoft\\Kiota\\Abstractions\\RequestInformation();
 $requestInfo->httpMethod = \\Microsoft\\Kiota\\Abstractions\\HttpMethod::${methodLower.charAt(0).toUpperCase() + methodLower.slice(1)}();
-$requestInfo->urlTemplate = '{+baseurl}${path}';
+$requestInfo->urlTemplate = '{+baseurl}${safePath}';
 
 $result = $graphClient->getRequestAdapter()
     ->sendPrimitiveAsync($requestInfo, 'string'${bodyArg})
@@ -338,14 +366,15 @@ echo $result;`;
 }
 
 function generateCurl(method: string, url: string, headers?: Record<string, string>, body?: string): string {
+  const safeUrl = escDoubleQuote(url);
   const customHeaders = Object.entries(headers ?? {})
     .filter(([k]) => k.toLowerCase() !== "content-type")
-    .map(([k, v]) => ` \\\n  -H "${k}: ${v}"`)
+    .map(([k, v]) => ` \\\n  -H "${escDoubleQuote(k)}: ${escDoubleQuote(v)}"`)
     .join("");
 
-  const bodyArg = body ? ` \\\n  -d '${body}'` : "";
+  const bodyArg = body ? ` \\\n  -d '${escShell(body)}'` : "";
 
-  return `curl -X ${method} "${url}" \\
+  return `curl -X ${method} "${safeUrl}" \\
   -H "Authorization: Bearer {access_token}" \\
   -H "Content-Type: application/json"${customHeaders}${bodyArg}`;
 }
