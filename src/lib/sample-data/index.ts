@@ -195,9 +195,20 @@ const SAMPLE_RESPONSES: Record<string, object> = {
     ],
   },
 
-  // Intune apps
+  // Intune apps (beta)
   "GET /beta/deviceAppManagement/mobileApps": {
     "@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceAppManagement/mobileApps",
+    value: [
+      { id: "ma1a2b3c-4d5e", displayName: "Microsoft Teams", "@odata.type": "#microsoft.graph.winGetApp", publisher: "Microsoft Corporation", isFeatured: true, publishingState: "published" },
+      { id: "ma2b3c4d-5e6f", displayName: "Google Chrome", "@odata.type": "#microsoft.graph.winGetApp", publisher: "Google LLC", isFeatured: false, publishingState: "published" },
+      { id: "ma3c4d5e-6f78", displayName: "Zoom Workplace", "@odata.type": "#microsoft.graph.winGetApp", publisher: "Zoom Video Communications", isFeatured: false, publishingState: "published" },
+      { id: "ma4d5e6f-7890", displayName: "Company Portal", "@odata.type": "#microsoft.graph.microsoftStoreForBusinessApp", publisher: "Microsoft Corporation", isFeatured: true, publishingState: "published" },
+    ],
+  },
+
+  // Intune apps (v1.0)
+  "GET /v1.0/deviceAppManagement/mobileApps": {
+    "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#deviceAppManagement/mobileApps",
     value: [
       { id: "ma1a2b3c-4d5e", displayName: "Microsoft Teams", "@odata.type": "#microsoft.graph.winGetApp", publisher: "Microsoft Corporation", isFeatured: true, publishingState: "published" },
       { id: "ma2b3c4d-5e6f", displayName: "Google Chrome", "@odata.type": "#microsoft.graph.winGetApp", publisher: "Google LLC", isFeatured: false, publishingState: "published" },
@@ -452,6 +463,136 @@ const SAMPLE_RESPONSES: Record<string, object> = {
       { id: "pt1a2b3c4d", planId: "plan-alpha-001", bucketId: "bucket-todo", title: "Update deployment documentation", percentComplete: 50, startDateTime: "2026-04-07T00:00:00Z", dueDateTime: "2026-04-12T00:00:00Z", priority: 3, createdDateTime: "2026-04-05T09:00:00Z", assignments: { "87d349ed-44d7-43e1-9a83-5f2406dee5bd": { orderHint: "8585" } } },
       { id: "pt2b3c4d5e", planId: "plan-alpha-001", bucketId: "bucket-inprogress", title: "Review pull request #142", percentComplete: 0, startDateTime: null, dueDateTime: "2026-04-09T00:00:00Z", priority: 1, createdDateTime: "2026-04-08T10:00:00Z", assignments: { "87d349ed-44d7-43e1-9a83-5f2406dee5bd": { orderHint: "8586" } } },
       { id: "pt3c4d5e6f", planId: "plan-alpha-001", bucketId: "bucket-done", title: "Set up CI/CD pipeline", percentComplete: 100, startDateTime: "2026-04-01T00:00:00Z", dueDateTime: "2026-04-05T00:00:00Z", priority: 5, createdDateTime: "2026-03-28T14:00:00Z", assignments: {} },
+    ],
+  },
+
+  // ── Additional high-value samples (review-driven) ───────────────
+
+  // My Chats
+  "GET /v1.0/me/chats": {
+    "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#chats",
+    value: [
+      { id: "19:meeting_MjdhNjM4YzUtYz@thread.v2", chatType: "meeting", topic: "Weekly Standup", createdDateTime: "2026-04-01T09:00:00Z", lastUpdatedDateTime: "2026-04-08T09:30:00Z" },
+      { id: "19:1on1_abc123@thread.v2", chatType: "oneOnOne", topic: null, createdDateTime: "2026-03-15T10:00:00Z", lastUpdatedDateTime: "2026-04-08T14:00:00Z" },
+      { id: "19:group_xyz789@thread.v2", chatType: "group", topic: "Project Alpha", createdDateTime: "2026-02-20T11:00:00Z", lastUpdatedDateTime: "2026-04-08T12:15:00Z" },
+    ],
+  },
+
+  // Subscriptions
+  "GET /v1.0/subscriptions": {
+    "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#subscriptions",
+    value: [
+      { id: "sub1a2b3c4d-5e6f", resource: "me/mailFolders('Inbox')/messages", changeType: "created", clientState: "secretClientState", notificationUrl: "https://webhook.contoso.com/api/notifications", expirationDateTime: "2026-04-10T11:00:00Z", createdDateTime: "2026-04-08T11:00:00Z" },
+      { id: "sub2b3c4d5e-6f78", resource: "users", changeType: "updated", clientState: "secretClientState", notificationUrl: "https://webhook.contoso.com/api/user-changes", expirationDateTime: "2026-04-09T08:00:00Z", createdDateTime: "2026-04-07T08:00:00Z" },
+    ],
+  },
+
+  // Role Management - Role Assignments
+  "GET /v1.0/roleManagement/directory/roleAssignments": {
+    "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#roleManagement/directory/roleAssignments",
+    value: [
+      { id: "ra1a2b3c4d", principalId: "87d349ed-44d7-43e1-9a83-5f2406dee5bd", roleDefinitionId: "62e90394-69f5-4237-9190-012177145e10", directoryScopeId: "/" },
+      { id: "ra2b3c4d5e", principalId: "98dc9c4a-b975-4017-b998-5e36c6d18ab1", roleDefinitionId: "fe930be7-5e62-47db-91af-98c3a49a38b1", directoryScopeId: "/" },
+      { id: "ra3c4d5e6f", principalId: "5bde3e51-d13b-4db1-9f46-02e3a345b982", roleDefinitionId: "194ae4cb-b126-40b2-bd5b-6091b380977d", directoryScopeId: "/" },
+    ],
+  },
+
+  // Role Management - Role Definitions
+  "GET /v1.0/roleManagement/directory/roleDefinitions": {
+    "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#roleManagement/directory/roleDefinitions",
+    value: [
+      { id: "62e90394-69f5-4237-9190-012177145e10", displayName: "Global Administrator", description: "Can manage all aspects of Microsoft Entra ID and Microsoft services that use Microsoft Entra identities.", isBuiltIn: true, isEnabled: true },
+      { id: "fe930be7-5e62-47db-91af-98c3a49a38b1", displayName: "User Administrator", description: "Can manage all aspects of users and groups, including resetting passwords for limited admins.", isBuiltIn: true, isEnabled: true },
+      { id: "194ae4cb-b126-40b2-bd5b-6091b380977d", displayName: "Security Administrator", description: "Can read security information and reports, and manage configuration in Microsoft Entra ID and Office 365.", isBuiltIn: true, isEnabled: true },
+      { id: "729827e3-9c14-49f7-bb1b-9608f156bbb8", displayName: "Helpdesk Administrator", description: "Can reset passwords for non-administrators and Helpdesk Administrators.", isBuiltIn: true, isEnabled: true },
+    ],
+  },
+
+  // Authentication Methods Policy
+  "GET /v1.0/policies/authenticationMethodsPolicy": {
+    "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#policies/authenticationMethodsPolicy/$entity",
+    id: "authenticationMethodsPolicy",
+    displayName: "Authentication Methods Policy",
+    description: "Tenant-wide policy that controls which authentication methods are allowed.",
+    lastModifiedDateTime: "2026-03-20T10:00:00Z",
+    policyVersion: "1.5",
+    registrationEnforcement: { authenticationMethodsRegistrationCampaign: { state: "enabled", snoozeDurationInDays: 14 } },
+    policyMigrationState: "migrationComplete",
+  },
+
+  // Managed Device Overview
+  "GET /beta/deviceManagement/managedDeviceOverview": {
+    "@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceManagement/managedDeviceOverview/$entity",
+    id: "overview",
+    enrolledDeviceCount: 156,
+    mdmEnrolledCount: 142,
+    dualEnrolledDeviceCount: 14,
+    deviceOperatingSystemSummary: { androidCount: 18, iosCount: 35, macOSCount: 22, windowsCount: 67, windowsMobileCount: 0, unknownCount: 0 },
+    deviceExchangeAccessStateSummary: { allowedDeviceCount: 150, blockedDeviceCount: 3, quarantinedDeviceCount: 2, unknownDeviceCount: 1 },
+  },
+
+  // App Protection Policies (iOS)
+  "GET /v1.0/deviceAppManagement/iosManagedAppProtections": {
+    "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#deviceAppManagement/iosManagedAppProtections",
+    value: [
+      { id: "iap1a2b3c4d", displayName: "iOS App Protection - Standard", periodOfflineBeforeAccessCheck: "PT12H", periodOnlineBeforeAccessCheck: "PT30M", allowedInboundDataTransferSources: "managedApps", allowedOutboundDataTransferDestinations: "managedApps", pinRequired: true, minimumPinLength: 6, managedBrowser: "microsoftEdge" },
+      { id: "iap2b3c4d5e", displayName: "iOS App Protection - Strict", periodOfflineBeforeAccessCheck: "PT4H", periodOnlineBeforeAccessCheck: "PT15M", allowedInboundDataTransferSources: "managedApps", allowedOutboundDataTransferDestinations: "none", pinRequired: true, minimumPinLength: 8, managedBrowser: "microsoftEdge" },
+    ],
+  },
+
+  // App Protection Policies (Android)
+  "GET /v1.0/deviceAppManagement/androidManagedAppProtections": {
+    "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#deviceAppManagement/androidManagedAppProtections",
+    value: [
+      { id: "aap1a2b3c4d", displayName: "Android App Protection - Standard", periodOfflineBeforeAccessCheck: "PT12H", periodOnlineBeforeAccessCheck: "PT30M", allowedInboundDataTransferSources: "managedApps", allowedOutboundDataTransferDestinations: "managedApps", pinRequired: true, minimumPinLength: 6, screenCaptureBlocked: true },
+      { id: "aap2b3c4d5e", displayName: "Android App Protection - Strict", periodOfflineBeforeAccessCheck: "PT4H", periodOnlineBeforeAccessCheck: "PT15M", allowedInboundDataTransferSources: "managedApps", allowedOutboundDataTransferDestinations: "none", pinRequired: true, minimumPinLength: 8, screenCaptureBlocked: true },
+    ],
+  },
+
+  // OneDrive - Recent Files
+  "GET /v1.0/me/drive/recent": {
+    "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#Collection(driveItem)",
+    value: [
+      { id: "dr-recent-1", name: "Q4 Budget.xlsx", lastModifiedDateTime: "2026-04-08T14:15:00Z", size: 1234567, file: { mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }, lastModifiedBy: { user: { displayName: "Adele Vance" } } },
+      { id: "dr-recent-2", name: "Architecture Diagram.vsdx", lastModifiedDateTime: "2026-04-08T10:00:00Z", size: 2345678, file: { mimeType: "application/vnd.ms-visio.drawing" }, lastModifiedBy: { user: { displayName: "Johanna Lorenz" } } },
+      { id: "dr-recent-3", name: "Meeting Notes.docx", lastModifiedDateTime: "2026-04-07T16:30:00Z", size: 456789, file: { mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }, lastModifiedBy: { user: { displayName: "Adele Vance" } } },
+    ],
+  },
+
+  // OneDrive - Shared With Me
+  "GET /v1.0/me/drive/sharedWithMe": {
+    "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#Collection(driveItem)",
+    value: [
+      { id: "sw-1", name: "Marketing Campaign Plan.pptx", remoteItem: { id: "remote-1", name: "Marketing Campaign Plan.pptx", size: 3456789, file: { mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation" }, shared: { owner: { user: { displayName: "Megan Bowen" } }, sharedDateTime: "2026-04-05T09:00:00Z" } } },
+      { id: "sw-2", name: "Sales Report Q1.xlsx", remoteItem: { id: "remote-2", name: "Sales Report Q1.xlsx", size: 987654, file: { mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }, shared: { owner: { user: { displayName: "Isaiah Langer" } }, sharedDateTime: "2026-04-02T14:00:00Z" } } },
+    ],
+  },
+
+  // Secure Score
+  "GET /beta/security/secureScores": {
+    "@odata.context": "https://graph.microsoft.com/beta/$metadata#security/secureScores",
+    value: [
+      { id: "ss1a2b3c4d", currentScore: 72.5, maxScore: 100, enabledServices: ["Microsoft Entra ID", "Microsoft Defender for Endpoint", "Microsoft Defender for Office 365", "Microsoft Intune"], createdDateTime: "2026-04-08T00:00:00Z", controlScores: [{ controlName: "MFARegistrationV2", score: 9, description: "MFA registration" }, { controlName: "BlockLegacyAuthentication", score: 8, description: "Block legacy authentication" }] },
+    ],
+  },
+
+  // Autopilot Device Identities
+  "GET /beta/deviceManagement/windowsAutopilotDeviceIdentities": {
+    "@odata.context": "https://graph.microsoft.com/beta/$metadata#deviceManagement/windowsAutopilotDeviceIdentities",
+    value: [
+      { id: "ap1a2b3c4d", groupTag: "IT-Standard", serialNumber: "SN-CONTOSO-001", model: "Surface Pro 9", manufacturer: "Microsoft Corporation", enrollmentState: "enrolled", lastContactedDateTime: "2026-04-08T12:00:00Z", deploymentProfileAssignmentStatus: "assignedSuccessfully" },
+      { id: "ap2b3c4d5e", groupTag: "IT-Executive", serialNumber: "SN-CONTOSO-002", model: "Surface Laptop 5", manufacturer: "Microsoft Corporation", enrollmentState: "enrolled", lastContactedDateTime: "2026-04-07T08:00:00Z", deploymentProfileAssignmentStatus: "assignedSuccessfully" },
+      { id: "ap3c4d5e6f", groupTag: "IT-Standard", serialNumber: "SN-CONTOSO-003", model: "ThinkPad X1 Carbon", manufacturer: "Lenovo", enrollmentState: "notContacted", lastContactedDateTime: null, deploymentProfileAssignmentStatus: "pending" },
+    ],
+  },
+
+  // MFA Registration Details
+  "GET /beta/reports/authenticationMethods/userRegistrationDetails": {
+    "@odata.context": "https://graph.microsoft.com/beta/$metadata#reports/authenticationMethods/userRegistrationDetails",
+    value: [
+      { id: "87d349ed-44d7-43e1-9a83-5f2406dee5bd", userPrincipalName: "AdeleV@contoso.com", userDisplayName: "Adele Vance", isMfaRegistered: true, isMfaCapable: true, isSsprRegistered: true, isSsprEnabled: true, isSsprCapable: true, isPasswordlessCapable: false, methodsRegistered: ["microsoftAuthenticatorPush", "mobilePhone"] },
+      { id: "4562bcc8-c436-4f95-b7c0-4f8ce89dca5e", userPrincipalName: "AlexW@contoso.com", userDisplayName: "Alex Wilber", isMfaRegistered: true, isMfaCapable: true, isSsprRegistered: false, isSsprEnabled: true, isSsprCapable: false, isPasswordlessCapable: true, methodsRegistered: ["fido2", "microsoftAuthenticatorPush"] },
+      { id: "f7afe5f0-3e6e-4a89-bde6-b4c2e2b1df9c", userPrincipalName: "DiegoS@contoso.com", userDisplayName: "Diego Siciliani", isMfaRegistered: false, isMfaCapable: false, isSsprRegistered: false, isSsprEnabled: true, isSsprCapable: false, isPasswordlessCapable: false, methodsRegistered: [] },
     ],
   },
 };
