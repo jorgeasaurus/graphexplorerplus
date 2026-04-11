@@ -1,6 +1,6 @@
 # Graph Explorer Plus
 
-**[graphexplorerplus.vercel.app](https://graphexplorerplus.vercel.app)**
+**[graphexplorerpl.us](https://graphexplorerpl.us)**
 
 A power-user alternative to [Microsoft Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer) built with Next.js. Designed for IT admins, security engineers, and developers who live in the Graph API daily.
 
